@@ -1,95 +1,102 @@
+/* Sidebar Container */
 .sidenav-main-container {
-    width: 300px;
+    width: 280px; /* Slightly reduced width for better proportions */
     border-radius: 12px;
     background-color: darkcyan;
     padding: 2rem 0;
-    margin: 3rem 0;
-    height: calc(-4rem + 100vh);
+    margin: 2rem 1rem; /* Adjusted margin for better spacing */
+    height: calc(100vh - 4rem); /* Full height minus padding */
     position: fixed;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Added shadow for depth */
+    overflow-y: auto; /* Enable scrolling if content overflows */
 }
 
+/* Profile Section */
 .sidenav-profile-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: -75px;
+    margin-bottom: 2rem; /* Added margin for spacing */
 }
 
 .sidenav-profile-img {
     border-radius: 50%;
-    height: 86px;
-    width: 86px;
+    height: 100px; /* Slightly larger image */
+    width: 100px;
+    border: 3px solid white; /* Added border for better visibility */
+    object-fit: cover; /* Ensure the image fits well */
 }
 
 .sidenav-profile-name {
-    font-family: Inter;
-    font-size: 16px;
+    font-family: Inter, sans-serif;
+    font-size: 18px; /* Slightly larger font */
     font-weight: 600;
-    line-height: 19.36px;
+    line-height: 1.2;
     color: white;
+    margin-top: 1rem; /* Added margin for spacing */
 }
 
 .sidenav-profile-email {
-    font-family: Inter;
-    font-size: 12px;
+    font-family: Inter, sans-serif;
+    font-size: 14px; /* Slightly larger font */
     font-weight: 400;
-    line-height: 14.52px;
-    color: white;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.8); /* Lighter color for contrast */
+    margin-top: 0.5rem; /* Added margin for spacing */
 }
 
+/* Navigation List */
 .sidenav-list-main-container {
-    margin-top: 2rem;
+    margin-top: 1rem; /* Reduced margin for better spacing */
 }
 
 .sidenav-list {
-    height: 59px;
-    border-radius: 14px;
+    height: 50px; /* Reduced height for compactness */
+    border-radius: 10px; /* Slightly rounded corners */
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 1rem;
-    padding: 0 1rem;
-    margin: 0 1rem;
+    padding: 0 1.5rem; /* Increased padding for better spacing */
+    margin: 0.5rem 1rem; /* Added margin between items */
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
 }
 
 .sidenav-list:hover {
     background-color: white;
     cursor: pointer;
+    transform: translateX(5px); /* Slight movement on hover */
 }
 
 .sidenav-icon {
     width: 24px;
     height: 24px;
     color: white;
+    transition: color 0.3s ease; /* Smooth color transition */
 }
 
 .sidenav-list-text {
-    font-family: Inter;
+    font-family: Inter, sans-serif;
     font-size: 16px;
     font-weight: 500;
-    line-height: 19.36px;
-    color: #FFFFFF;
+    line-height: 1.2;
+    color: white;
+    transition: color 0.3s ease; /* Smooth color transition */
 }
 
-.sidenav-list:hover .sidenav-icon {
-    color: darkcyan;
-}
-
+.sidenav-list:hover .sidenav-icon,
 .sidenav-list:hover .sidenav-list-text {
-    color: darkcyan;
+    color: darkcyan; /* Change color on hover */
 }
 
+/* Active Link Styling */
 .default-hover {
     background-color: white;
     cursor: pointer;
-    color: darkcyan;
 }
 
-.default-hover .sidenav-icon {
-    color: darkcyan;
-}
-
+.default-hover .sidenav-icon,
 .default-hover .sidenav-list-text {
     color: darkcyan;
 }

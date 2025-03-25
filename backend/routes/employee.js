@@ -80,4 +80,23 @@ router.get('/employees-stats', async (req, res) => {
         res.status(500).json({ message: error });
     }
 });
+router.put("/employee/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { employee_id, firstName, lastName, email, phone, residentialAddress, cnic, role, dateOfBirth, startDate, status, gender } = req.body;
+        await Employee.findByIdAndUpdate(id, { employee_id, firstName, lastName, email, phone, residentialAddress, cnic, role, dateOfBirth, startDate, status, gender });
+        res.status(200).json({ message: "Employee updated successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error });
+    }
+});
+router.delete("/employee/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Employee.findByIdAndDelete(id);
+        res.status(200).json({ message: "Employee deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error });
+    }
+});
 module.exports = router

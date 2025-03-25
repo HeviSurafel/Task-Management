@@ -11,7 +11,6 @@ import Attendance from './layouts/attendance/Attendance.jsx'
 function App() {
   return (
     <>
-
       <Router>
         <Routes>
           <Route path='/' element={<Login />} />
