@@ -1,7 +1,25 @@
-import React, { useState, useEffect } from 'react'
-import Sidenav from '../../components/sidenav/Sidenav'
-import { CircularProgress, CircularProgressLabel } from '@chakra-ui/react'
-import "./tasks.css"
+import React, { useState, useEffect } from 'react';
+import Sidenav from '../../components/sidenav/Sidenav';
+import { 
+  CircularProgress, 
+  CircularProgressLabel, 
+  Tag,
+  Box,
+  Text,
+  useColorModeValue,
+  SimpleGrid,
+  Card,
+  CardHeader,
+  CardBody,
+  Stack,
+  Heading,
+  Button,
+  Badge
+} from '@chakra-ui/react';
+import {Grid} from '@chakra-ui/react';
+import {GridItem} from '@chakra-ui/react';
+import {Flex} from '@chakra-ui/react';
+import "./tasks.css";
 import pending from '../../assets/tasks/Pending.png';
 import complete from '../../assets/tasks/complete.png';
 import book from '../../assets/tasks/Book.png';
@@ -9,228 +27,267 @@ import totaltasks from '../../assets/tasks/totaltasks.png';
 import totalprogress from '../../assets/tasks/totalprogress.png';
 import totalpending from '../../assets/tasks/totalpending.png';
 import totalcomplete from '../../assets/tasks/totalcomplete.png';
-import { IoReaderOutline } from "react-icons/io5";
+import { IoReaderOutline,  } from "react-icons/io5";
+import { IoMdAdd } from "react-icons/io";
 import { FcStatistics } from "react-icons/fc";
-import Navbar from '../../components/navbar/Navbar'
-import {
-    Tag,
-} from '@chakra-ui/react'
+import Navbar from '../../components/navbar/Navbar';
 import AddTaskModal from './modals/AddTask';
 import ReadTaskModal from './modals/ReadTask';
-import { IoMdAdd } from "react-icons/io";
-import axios from 'axios';
+import useAdminStore from '../../store/admin.store';
 
 function Tasks() {
     const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
     const [isReadTaskModalOpen, setIsReadTaskModalOpen] = useState(false);
+    const { taskDahboard, tasksDashboard, projects, employeesData, getProjects, getEmployees } = useAdminStore();
+    const cardBg = useColorModeValue('white', 'gray.700');
+    const textColor = useColorModeValue('gray.600', 'gray.300');
     
-    const openAddTaskModal = () => {
-        setIsAddTaskModalOpen(true);
-    };
-    const openReadTaskModal = () => {
-        setIsReadTaskModalOpen(true);
+    const openAddTaskModal = () => setIsAddTaskModalOpen(true);
+    const openReadTaskModal = () => setIsReadTaskModalOpen(true);
+    const closeAddTaskModal = () => setIsAddTaskModalOpen(false);
+    const closeReadTaskModal = () => setIsReadTaskModalOpen(false);
+
+    useEffect(() => {
+        taskDahboard();
+        getProjects();
+        getEmployees();
+    }, []);
+
+    const dashboardData = tasksDashboard?.data?.data?.globalStats || {};
+    const recentTasks = dashboardData.recentTasks || [];
+console.log("taskDahboard",tasksDashboard)
+    // Calculate percentages
+    const calculatePercentage = (value, total) => {
+        if (total === 0) return 0;
+        return Math.round((value / total) * 100);
     };
 
-    const closeAddTaskModal = () => {
-        setIsAddTaskModalOpen(false);
+    const completedPercentage = calculatePercentage(dashboardData.completedTasks || 0, dashboardData.totalTasks || 1);
+    const inProgressPercentage = calculatePercentage(dashboardData.inProgressTasks || 0, dashboardData.totalTasks || 1);
+    const pendingPercentage = calculatePercentage(dashboardData.pendingTasks || 0, dashboardData.totalTasks || 1);
+    const overduePercentage = calculatePercentage(dashboardData.overdueTasks || 0, dashboardData.totalTasks || 1);
+
+    // Stats data
+    const statsData = [
+        {
+            icon: totaltasks,
+            value: dashboardData.totalTasks || 0,
+            label: "Total Tasks",
+            colorScheme: "blue"
+        },
+        {
+            icon: totalcomplete,
+            value: dashboardData.completedTasks || 0,
+            label: "Completed",
+            colorScheme: "green"
+        },
+        {
+            icon: totalprogress,
+            value: dashboardData.inProgressTasks || 0,
+            label: "In Progress",
+            colorScheme: "orange"
+        },
+        {
+            icon: totalpending,
+            value: dashboardData.pendingTasks || 0,
+            label: "Pending",
+            colorScheme: "red"
+        },
+        {
+            icon: totalpending,
+            value: dashboardData.overdueTasks || 0,
+            label: "Overdue",
+            colorScheme: "purple"
+        }
+    ];
+
+    // Priority distribution
+    const priorityData = dashboardData.priorityDistribution || {
+        High: 0,
+        Medium: 0,
+        Low: 0
     };
-    const closeReadTaskModal = () => {
-        setIsReadTaskModalOpen(false);
-    };
+
     return (
         <>
-            <AddTaskModal isOpen={isAddTaskModalOpen} onClose={closeAddTaskModal} />
+            <AddTaskModal isOpen={isAddTaskModalOpen} onClose={closeAddTaskModal} projects={projects} employees={employeesData} />
             <ReadTaskModal isOpen={isReadTaskModalOpen} onClose={closeReadTaskModal} />
+            
             <div className='app-main-container'>
-                <div className='app-main-left-container'><Sidenav /></div>
-                <div className='app-main-right-container'>
-                    <Navbar />
-                    <div className='dashboard-main-container'>
-                        <div className='dashboard-main-left-container'>
-                            <div className='task-status-card-container'>
-                                <div className='add-task-inner-div'>
-                                    <FcStatistics className='task-stats' />
-                                    <p className='todo-text'>Tasks Statistics</p>
-                                </div>
-                                <div className='stat-first-row'>
-                                    <div className='stats-container container-bg1'>
-                                        <img className='stats-icon' src={totaltasks} alt="totaltasks" />
-                                        <div>
-                                            <p className='stats-num'>1200</p>
-                                            <p className='stats-text'>Total Task</p>
-                                        </div>
-                                    </div>
-                                    <div className='stats-container container-bg4'>
-                                        <img className='stats-icon' src={totalcomplete} alt="totalcomplete" />
-                                        <div>
-                                            <p className='stats-num'>1200</p>
-                                            <p className='stats-text'>Completed</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className='stat-second-row'>
-                                    <div className='stats-container container-bg2'>
-                                        <img className='stats-icon' src={totalprogress} alt="totalprogress" />
-                                        <div>
-                                            <p className='stats-num'>1200</p>
-                                            <p className='stats-text'>In Progress</p>
-                                        </div>
-                                    </div>
-                                    <div className='stats-container container-bg3'>
-                                        <img className='stats-icon' src={totalpending} alt="totalpending" />
-                                        <div>
-                                            <p className='stats-num'>1200</p>
-                                            <p className='stats-text'>Pending</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className='add-task-main-container'>
-                                <div className='add-task-main-div'>
-                                    <div className='add-task-inner-div'>
-                                        <img src={pending} alt="pending" />
-                                        <p className='todo-text'>To-Do Tasks</p>
-                                    </div>
-                                    <button className='table-btn-task' onClick={openAddTaskModal}><IoMdAdd />Add Task</button>
-                                </div>
-                                <div className='task-card-container'>
-                                    <p className='task-title'>Attend Nischal’s Birthday
-                                        Party</p>
-                                    <div className='task-desc-container'>
-                                        <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                                    </div>
-                                    <div className='task-card-footer-container'>
-                                        <div>
-                                            <Tag size='lg' colorScheme='red' borderRadius='full'>
-                                                <p className='tag-text'>Most Important</p>
-                                            </Tag>
-                                        </div>
-                                        <div>
-                                            <div className='task-read' onClick={openReadTaskModal}>
-                                                <IoReaderOutline className='read-icon' />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p className='created'>Created on: 20/06/2023</p>
-                                </div>
-                                <div className='task-card-container'>
-                                    <p className='task-title'>Attend Nischal’s Birthday
-                                        Party</p>
-                                    <div className='task-desc-container'>
-                                        <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                                    </div>
-                                    <div className='task-card-footer-container'>
-                                        <div>
-                                            <Tag size='lg' colorScheme='red' borderRadius='full'>
-                                                <p className='tag-text'>Most Important</p>
-                                            </Tag>
-                                        </div>
-                                        <div>
-                                            <div className='task-read'>
-                                                <IoReaderOutline className='read-icon' />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p className='created'>Created on: 20/06/2023</p>
-                                </div>
-                            </div>
-                        </div>
+              <div className='app-main-right-container'>
+                
+                    <Box p={4}>
+                        {/* Stats Overview */}
+                        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 5 }} spacing={4} mb={6}>
+                            {statsData.map((stat, index) => (
+                                <StatCard 
+                                    key={index}
+                                    icon={stat.icon}
+                                    value={stat.value}
+                                    label={stat.label}
+                                    colorScheme={stat.colorScheme}
+                                />
+                            ))}
+                        </SimpleGrid>
 
-                        <div className='dashboard-main-right-container'>
-                            <div className='task-status-card-container'>
-                                <div className='add-task-inner-div'>
-                                    <img src={complete} alt="complete" />
-                                    <p className='todo-text'>Tasks Status</p>
-                                </div>
-                                <div className='task-status-progress-main-container'>
-                                    <div>
-                                        <CircularProgress value={80} color='#05A301' size={'100px'}>
-                                            <CircularProgressLabel>80%</CircularProgressLabel>
-                                        </CircularProgress>
-                                        <p className='completed'>Completed</p>
-                                    </div>
-                                    <div>
-                                        <CircularProgress value={60} color='#0225FF' size={'100px'}>
-                                            <CircularProgressLabel>60%</CircularProgressLabel>
-                                        </CircularProgress>
-                                        <p className='progress'>In Progress</p>
-                                    </div>
-                                    <div>
-                                        <CircularProgress value={20} color='#F21E1E' size={'100px'}>
-                                            <CircularProgressLabel>20%</CircularProgressLabel>
-                                        </CircularProgress>
-                                        <p className='pending'>Pending</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className='add-task-main-container'>
-                                <div className='add-task-main-div'>
-                                    <div className='add-task-inner-div'>
-                                        <img src={book} alt="Book" />
-                                        <p className='todo-text'>In Progress Tasks</p>
-                                    </div>
-                                </div>
-                                <div className='task-card-container'>
-                                    <p className='task-title'>Attend Nischal’s Birthday
-                                        Party</p>
-                                    <div className='task-desc-container'>
-                                        <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                                    </div>
-                                    <div className='task-card-footer-container'>
-                                        <div>
-                                            <Tag size='lg' colorScheme='blue' borderRadius='full'>
-                                                <p className='tag-text'>In Progress</p>
-                                            </Tag>
-                                        </div>
-                                        <div>
-                                            <div className='task-read'>
-                                                <IoReaderOutline className='read-icon' />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <CircularProgress value={40} color='#0225FF'>
-                                                <CircularProgressLabel>40%</CircularProgressLabel>
-                                            </CircularProgress>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className='add-task-main-container'>
-                                <div className='add-task-main-div'>
-                                    <div className='add-task-inner-div'>
-                                        <img src={book} alt="Book" />
-                                        <p className='todo-text'>Completed Tasks</p>
-                                    </div>
-                                </div>
-                                <div className='task-card-container'>
-                                    <p className='task-title'>Attend Nischal’s Birthday
-                                        Party</p>
-                                    <div className='task-desc-container'>
-                                        <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                                    </div>
-                                    <div className='task-card-footer-container'>
-                                        <div>
-                                            <Tag size='lg' colorScheme='green' borderRadius='full'>
-                                                <p className='tag-text'>Completed</p>
-                                            </Tag>
-                                        </div>
-                                        <div>
-                                            <div className='task-read'>
-                                                <IoReaderOutline className='read-icon' />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p className='created'>Completed 2 days ago</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={6}>
+                            {/* Left Column */}
+                            <GridItem>
+                                {/* Recent Tasks */}
+                                <Card bg={cardBg} mb={6}>
+                                    <CardHeader>
+                                        <Flex align="center">
+                                            <FcStatistics size={24} />
+                                            <Heading size="md" ml={2}>Recent Tasks</Heading>
+                                        </Flex>
+                                    </CardHeader>
+                                    <CardBody>
+                                        {recentTasks.length > 0 ? (
+                                            <Stack spacing={4}>
+                                                {recentTasks.map((task, index) => (
+                                                    <TaskCard 
+                                                        key={index}
+                                                        title={task.title}
+                                                        assignee={task.assignee?.name || 'Unassigned'}
+                                                        status={task.status}
+                                                        onRead={openReadTaskModal}
+                                                    />
+                                                ))}
+                                            </Stack>
+                                        ) : (
+                                            <Text>No recent tasks</Text>
+                                        )}
+                                    </CardBody>
+                                </Card>
+
+                                {/* Priority Distribution */}
+                                <Card bg={cardBg}>
+                                    <CardHeader>
+                                        <Heading size="md">Task Priority Distribution</Heading>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <SimpleGrid columns={3} spacing={4}>
+                                            {Object.entries(priorityData).map(([priority, count]) => (
+                                                <Box key={priority} textAlign="center">
+                                                    <Text fontSize="sm" color={textColor}>{priority}</Text>
+                                                    <Heading size="lg">{count}</Heading>
+                                                </Box>
+                                            ))}
+                                        </SimpleGrid>
+                                    </CardBody>
+                                </Card>
+                            </GridItem>
+
+                            {/* Right Column */}
+                            <GridItem>
+                                {/* Task Status */}
+                                <Card bg={cardBg} mb={6}>
+                                    <CardHeader>
+                                        <Flex align="center">
+                                            <img src={complete} alt="Task status" style={{ width: '24px' }} />
+                                            <Heading size="md" ml={2}>Task Status</Heading>
+                                        </Flex>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <SimpleGrid columns={2} spacing={4}>
+                                            <ProgressCircle 
+                                                value={completedPercentage} 
+                                                label="Completed" 
+                                                colorScheme="green" 
+                                            />
+                                            <ProgressCircle 
+                                                value={inProgressPercentage} 
+                                                label="In Progress" 
+                                                colorScheme="blue" 
+                                            />
+                                            <ProgressCircle 
+                                                value={pendingPercentage} 
+                                                label="Pending" 
+                                                colorScheme="orange" 
+                                            />
+                                            <ProgressCircle 
+                                                value={overduePercentage} 
+                                                label="Overdue" 
+                                                colorScheme="red" 
+                                            />
+                                        </SimpleGrid>
+                                    </CardBody>
+                                </Card>
+
+                                {/* Quick Actions */}
+                                <Card bg={cardBg}>
+                                    <CardHeader>
+                                        <Heading size="md">Quick Actions</Heading>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <Button 
+                                            leftIcon={<IoMdAdd />} 
+                                            colorScheme="teal" 
+                                            w="full"
+                                            onClick={openAddTaskModal}
+                                        >
+                                            Add New Task
+                                        </Button>
+                                    </CardBody>
+                                </Card>
+                            </GridItem>
+                        </Grid>
+                    </Box>
                 </div>
             </div>
-
-
         </>
     )
 }
 
-export default Tasks
+// Reusable Stat Card Component
+const StatCard = ({ icon, value, label, colorScheme }) => (
+    <Card variant="outline" borderLeft={`4px solid`} borderColor={`${colorScheme}.400`}>
+        <CardBody>
+            <Flex align="center">
+                <Box mr={4}>
+                    <img src={icon} alt={label} style={{ width: '30px' }} />
+                </Box>
+                <Box>
+                    <Text fontSize="sm">{label}</Text>
+                    <Heading size="lg">{value}</Heading>
+                </Box>
+            </Flex>
+        </CardBody>
+    </Card>
+);
+
+// Reusable Task Card Component
+const TaskCard = ({ title, assignee, status, onRead }) => {
+    const statusColor = {
+        'Completed': 'green',
+        'In Progress': 'blue',
+        'Pending': 'orange',
+        'Overdue': 'red'
+    }[status] || 'gray';
+
+    return (
+        <Card variant="outline">
+            <CardBody>
+                <Flex justify="space-between" align="center">
+                    <Box>
+                        <Heading size="sm">{title}</Heading>
+                        <Text fontSize="sm" color="gray.500">{assignee}</Text>
+                    </Box>
+                    <Badge colorScheme={statusColor}>{status}</Badge>
+                </Flex>
+            </CardBody>
+        </Card>
+    );
+};
+
+// Reusable Progress Circle Component
+const ProgressCircle = ({ value, label, colorScheme }) => (
+    <Box textAlign="center">
+        <CircularProgress value={value} color={`${colorScheme}.400`} size="80px" thickness="8px">
+            <CircularProgressLabel>{value}%</CircularProgressLabel>
+        </CircularProgress>
+        <Text mt={2} fontWeight="medium">{label}</Text>
+    </Box>
+);
+
+export default Tasks;

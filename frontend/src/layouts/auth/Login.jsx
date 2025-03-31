@@ -1,45 +1,33 @@
-import React, { useState } from 'react'
+import React, { useState,useEffect } from 'react'
 import "./login.css"
-import login from "../../assets/register/login.png"
+import loginpic from "../../assets/register/login.png"
 import email from "../../assets/register/email.png"
 import password from "../../assets/register/password.png"
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { useToast, Spinner } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-
+import useUserStore from '../../store/auth'
 function Login() {
     const navigate = useNavigate();
     const toast = useToast();
+    const{user,login}=useUserStore();
     const [loading, setLoading] = useState(false);
+    console.log("user",user)
+    
+  useEffect(() => {
+    if (user) {
+      navigate("/admin/dashboard"); // Redirect to home page if the user is logged in
+    }
+  }, [user, navigate]);
     const [formData, setFormData] = useState({ email: '', password: '' });
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setLoading(true);
-        try {
-            const response = await axios.post('api/login', formData);
-            localStorage.setItem('tm_token', response.data.token);
-            navigate('/admin/dashboard')
-        } catch (error) {
-            let Error = error.response.data.message
-            setFormData({
-                email: '',
-                password: ''
-            });
-            toast({
-                title: Error,
-                status: 'error',
-                position: 'top',
-                duration: 5000,
-                isClosable: true,
-            });
-            setLoading(false);
-        }
-    };
+        login(formData.email, formData.password );
+      };
     return (
         <div className='login-main-container'>
             <div className='login-container'>
@@ -73,7 +61,7 @@ function Login() {
                     <p className='account-text'>Don’t have an account? <Link to='/register'><span>Sign Up</span></Link></p>
                 </div>
                 <div className='login-right-container'>
-                    <img className='login-img' src={login} alt="login" />
+                    <img className='login-img' src={loginpic} alt="login" />
                 </div>
             </div>
         </div>

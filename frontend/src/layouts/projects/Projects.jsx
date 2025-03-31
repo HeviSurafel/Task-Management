@@ -1,276 +1,256 @@
-import React, { useState } from 'react'
-import Sidenav from '../../components/sidenav/Sidenav'
-import { CircularProgress, CircularProgressLabel } from '@chakra-ui/react'
-import "./projects.css"
-import pending from '../../assets/tasks/Pending.png';
-import complete from '../../assets/tasks/complete.png';
-import book from '../../assets/tasks/Book.png';
-import totaltasks from '../../assets/tasks/totaltasks.png';
-import totalprogress from '../../assets/tasks/totalprogress.png';
-import totalpending from '../../assets/tasks/totalpending.png';
-import totalcomplete from '../../assets/tasks/totalcomplete.png';
-import { IoReaderOutline } from "react-icons/io5";
-import { FcStatistics } from "react-icons/fc";
-import Navbar from '../../components/navbar/Navbar'
+import React, { useState, useEffect } from "react";
+import Sidenav from "../../components/sidenav/Sidenav";
 import {
-  Tag,
-} from '@chakra-ui/react'
-import AddProjectModal from './modals/AddProject';
-import ReadProjectModal from './modals/ReadProject';
+  CircularProgress,
+  CircularProgressLabel,
+  Box,
+  Flex,
+  Text,
+} from "@chakra-ui/react";
+import "./projects.css";
+import totaltasks from "../../assets/tasks/totaltasks.png";
+import totalprogress from "../../assets/tasks/totalprogress.png";
+import totalpending from "../../assets/tasks/totalpending.png";
+import totalcomplete from "../../assets/tasks/totalcomplete.png";
+import { FcStatistics } from "react-icons/fc";
+import Navbar from "../../components/navbar/Navbar";
+import { Tag } from "@chakra-ui/react";
+import AddProjectModal from "./modals/AddProject";
+import ReadProjectModal from "./modals/ReadProject";
 import { IoMdAdd } from "react-icons/io";
-
+import useAdminStore from "../../store/admin.store";
 
 function Projects() {
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [isReadProjectModalOpen, setIsReadProjectModalOpen] = useState(false);
 
-  const openAddProjectModal = () => {
-    setIsAddProjectModalOpen(true);
-  };
-  const openReadProjectModal = () => {
-    setIsReadProjectModalOpen(true);
+  const openAddProjectModal = () => setIsAddProjectModalOpen(true);
+  const openReadProjectModal = () => setIsReadProjectModalOpen(true);
+  const closeAddProjectModal = () => setIsAddProjectModalOpen(false);
+  const closeReadProjectModal = () => setIsReadProjectModalOpen(false);
+
+  const { projectsDashboard, projectDashboard } = useAdminStore();
+
+  useEffect(() => {
+    projectDashboard();
+  }, []);
+
+  // Extract project data from the response
+  const projects = projectsDashboard?.data?.data?.project || [];
+  const stats = projectsDashboard?.data?.data || {
+    totalProjects: 0,
+    completedProjects: 0,
+    InProgressProject: 0,
+    TestingProjects: 0,
+    OnHoldProjects: 0
   };
 
-  const closeAddProjectModal = () => {
-    setIsAddProjectModalOpen(false);
+  // Calculate percentages
+  const totalProjects = stats.totalProjects || 1;
+  const completedPercentage = (stats.completedProjects / totalProjects) * 100;
+  const inProgressPercentage = (stats.InProgressProject / totalProjects) * 100;
+  const testingPercentage = (stats.TestingProjects / totalProjects) * 100;
+  const onHoldPercentage = (stats.OnHoldProjects / totalProjects) * 100;
+
+  // Project status mapping
+  const statusGroups = {
+    "In Progress": stats.InProgressProject,
+    "Testing": stats.TestingProjects,
+    "Completed": stats.completedProjects,
+    "On Hold": stats.OnHoldProjects
   };
-  const closeReadProjectModal = () => {
-    setIsReadProjectModalOpen(false);
-  };
+
+  // Get projects by status
+  const getProjectsByStatus = (status) => 
+    projects.filter(project => project.status === status);
 
   return (
     <>
-      <AddProjectModal isOpen={isAddProjectModalOpen} onClose={closeAddProjectModal} />
-      <ReadProjectModal isOpen={isReadProjectModalOpen} onClose={closeReadProjectModal} />
-      <div className='app-main-container'>
-        <div className='app-main-left-container'><Sidenav /></div>
-        <div className='app-main-right-container'>
-          <Navbar />
-          <div className='dashboard-main-container'>
-            <div className='dashboard-main-left-container'>
-              <div className='task-status-card-container'>
-                <div className='add-task-inner-div'>
-                  <FcStatistics className='task-stats' />
-                  <p className='todo-text'>Projects Statistics</p>
-                </div>
-                <div className='stat-first-row'>
-                  <div className='stats-container container-bg1'>
-                    <img className='stats-icon' src={totaltasks} alt="totaltasks" />
-                    <div>
-                      <p className='stats-num'>1200</p>
-                      <p className='stats-text'>Total Projects</p>
-                    </div>
+      <AddProjectModal
+        isOpen={isAddProjectModalOpen}
+        onClose={closeAddProjectModal}
+      />
+      <ReadProjectModal
+        isOpen={isReadProjectModalOpen}
+        onClose={closeReadProjectModal}
+      />
+
+      <div className="app-main-container">
+      
+        <div className="app-main-right-container">
+     
+          <div className="projects-dashboard-container">
+            <Flex justify="space-between" align="center" mb="6">
+              <Text fontSize="2xl" fontWeight="bold" color="gray.700">
+                Projects Overview
+              </Text>
+              <button className="add-project-btn" onClick={openAddProjectModal}>
+                <IoMdAdd /> Add New Project
+              </button>
+            </Flex>
+
+            {/* Statistics Cards */}
+            <div className="stats-grid">
+              <div className="stats-card">
+                <div className="stats-card-inner">
+                  <div className="stats-icon-container">
+                    <img src={totaltasks} alt="Total Projects" />
                   </div>
-                  <div className='stats-container container-bg4'>
-                    <img className='stats-icon' src={totalcomplete} alt="totalcomplete" />
-                    <div>
-                      <p className='stats-num'>1200</p>
-                      <p className='stats-text'>Completed</p>
-                    </div>
-                  </div>
-                </div>
-                <div className='stat-second-row'>
-                  <div className='stats-container container-bg2'>
-                    <img className='stats-icon' src={totalprogress} alt="totalprogress" />
-                    <div>
-                      <p className='stats-num'>1200</p>
-                      <p className='stats-text'>In Progress</p>
-                    </div>
-                  </div>
-                  <div className='stats-container container-bg3'>
-                    <img className='stats-icon' src={totalpending} alt="totalpending" />
-                    <div>
-                      <p className='stats-num'>1200</p>
-                      <p className='stats-text'>Pending</p>
-                    </div>
+                  <div className="stats-content">
+                    <p className="stats-num-label">{stats.totalProjects}</p>
+                    <p className="stats-text-label">Total Projects</p>
                   </div>
                 </div>
               </div>
-              <div className='add-task-main-container'>
-                <div className='add-task-main-div'>
-                  <div className='add-task-inner-div'>
-                    <img src={pending} alt="pending" />
-                    <p className='todo-text'>To-Do Projects</p>
+              
+              <div className="stats-card">
+                <div className="stats-card-inner">
+                  <div className="stats-icon-container">
+                    <img src={totalcomplete} alt="Completed" />
                   </div>
-                  <button className='table-btn-task' onClick={openAddProjectModal}><IoMdAdd />Add Project</button>
+                  <div className="stats-content">
+                    <p className="stats-num-label">{stats.completedProjects}</p>
+                    <p className="stats-text-label">Completed</p>
+                  </div>
+                </div>
+              </div>
 
+              <div className="stats-card">
+                <div className="stats-card-inner">
+                  <div className="stats-icon-container">
+                    <img src={totalprogress} alt="In Progress" />
+                  </div>
+                  <div className="stats-content">
+                    <p className="stats-num-label">{stats.InProgressProject}</p>
+                    <p className="stats-text-label">In Progress</p>
+                  </div>
                 </div>
-                <div className='task-card-container'>
-                  <p className='task-title'>Attend Nischal’s Birthday
-                    Party</p>
-                  <div className='task-desc-container'>
-                    <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
+              </div>
+
+              <div className="stats-card">
+                <div className="stats-card-inner">
+                  <div className="stats-icon-container">
+                    <img src={totalpending} alt="On Hold" />
                   </div>
-                  <div className='task-card-footer-container'>
-                    <div>
-                      <Tag size='lg' colorScheme='red' borderRadius='full'>
-                        <p className='tag-text'>Most Important</p>
-                      </Tag>
-                    </div>
-                    <div>
-                      <div className='task-read' onClick={openReadProjectModal}>
-                        <IoReaderOutline className='read-icon' />
-                      </div>
-                    </div>
+                  <div className="stats-content">
+                    <p className="stats-num-label">{stats.OnHoldProjects}</p>
+                    <p className="stats-text-label">On Hold</p>
                   </div>
-                  <p className='created'>Created on: 20/06/2023</p>
-                </div>
-                <div className='task-card-container'>
-                  <p className='task-title'>Attend Nischal’s Birthday
-                    Party</p>
-                  <div className='task-desc-container'>
-                    <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                  </div>
-                  <div className='task-card-footer-container'>
-                    <div>
-                      <Tag size='lg' colorScheme='red' borderRadius='full'>
-                        <p className='tag-text'>Most Important</p>
-                      </Tag>
-                    </div>
-                    <div>
-                      <div className='task-read'>
-                        <IoReaderOutline className='read-icon' />
-                      </div>
-                    </div>
-                  </div>
-                  <p className='created'>Created on: 20/06/2023</p>
                 </div>
               </div>
             </div>
 
-            <div className='dashboard-main-right-container'>
-              <div className='task-status-card-container'>
-                <div className='add-task-inner-div'>
-                  <img src={complete} alt="complete" />
-                  <p className='todo-text'>Projects Status</p>
+            {/* Progress Status Section */}
+            <div className="progress-status-section">
+              <h3 className="section-title">Project Status Distribution</h3>
+              <div className="progress-circles">
+                <div className="progress-item">
+                  <CircularProgress
+                    value={completedPercentage}
+                    color="#05A301"
+                    size="120px"
+                    thickness="12px"
+                  >
+                    <CircularProgressLabel>
+                      {Math.round(completedPercentage)}%
+                    </CircularProgressLabel>
+                  </CircularProgress>
+                  <p className="status-label completed">Completed</p>
                 </div>
-                <div className='task-status-progress-main-container'>
-                  <div>
-                    <CircularProgress value={80} color='#05A301' size={'100px'}>
-                      <CircularProgressLabel>80%</CircularProgressLabel>
-                    </CircularProgress>
-                    <p className='completed'>Completed</p>
-                  </div>
-                  <div>
-                    <CircularProgress value={60} color='#0225FF' size={'100px'}>
-                      <CircularProgressLabel>60%</CircularProgressLabel>
-                    </CircularProgress>
-                    <p className='progress'>In Progress</p>
+                <div className="progress-item">
+                  <CircularProgress
+                    value={inProgressPercentage}
+                    color="#0225FF"
+                    size="120px"
+                    thickness="12px"
+                  >
+                    <CircularProgressLabel>
+                      {Math.round(inProgressPercentage)}%
+                    </CircularProgressLabel>
+                  </CircularProgress>
+                  <p className="status-label in-progress">In Progress</p>
+                </div>
+                <div className="progress-item">
+                  <CircularProgress
+                    value={testingPercentage}
+                    color="orange"
+                    size="120px"
+                    thickness="12px"
+                  >
+                    <CircularProgressLabel>
+                      {Math.round(testingPercentage)}%
+                    </CircularProgressLabel>
+                  </CircularProgress>
+                  <p className="status-label testing">Testing</p>
+                </div>
+                <div className="progress-item">
+                  <CircularProgress
+                    value={onHoldPercentage}
+                    color="#F21E1E"
+                    size="120px"
+                    thickness="12px"
+                  >
+                    <CircularProgressLabel>
+                      {Math.round(onHoldPercentage)}%
+                    </CircularProgressLabel>
+                  </CircularProgress>
+                  <p className="status-label on-hold">On Hold</p>
+                </div>
+              </div>
+            </div>
 
-                  </div>
-                  <div>
-                    <CircularProgress value={40} color='orange' size={'100px'}>
-                      <CircularProgressLabel>40%</CircularProgressLabel>
-                    </CircularProgress>
-                    <p className='testing'>Testing</p>
-
-                  </div>
-                  <div>
-                    <CircularProgress value={20} color='#F21E1E' size={'100px'}>
-                      <CircularProgressLabel>20%</CircularProgressLabel>
-                    </CircularProgress>
-                    <p className='pending'>Pending</p>
-                  </div>
-                </div>
-              </div>
-              <div className='add-task-main-container'>
-                <div className='add-task-main-div'>
-                  <div className='add-task-inner-div'>
-                    <img src={book} alt="Book" />
-                    <p className='todo-text'>In Progress Projects</p>
-                  </div>
-                </div>
-                <div className='task-card-container'>
-                  <p className='task-title'>Attend Nischal’s Birthday
-                    Party</p>
-                  <div className='task-desc-container'>
-                    <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                  </div>
-                  <div className='task-card-footer-container'>
-                    <div>
-                      <Tag size='lg' colorScheme='blue' borderRadius='full'>
-                        <p className='tag-text'>In Progress</p>
-                      </Tag>
-                    </div>
-                    <div>
-                      <div className='task-read'>
-                        <IoReaderOutline className='read-icon' />
+            {/* Projects by Status */}
+            <div className="projects-by-status">
+              {Object.entries(statusGroups).map(([status, count]) => (
+                count > 0 && (
+                  <div key={status} className="status-column">
+                    <h3 className="status-title">
+                      <span className={`status-dot ${status.toLowerCase().replace(' ', '-')}`}></span>
+                      {status} ({count})
+                    </h3>
+                    {getProjectsByStatus(status).map(project => (
+                      <div key={project._id} className="project-card">
+                        <h4 className="project-title">{project.title}</h4>
+                        <p className="project-desc">{project.description}</p>
+                        <div className="project-footer">
+                          <Tag colorScheme={
+                            status === 'Completed' ? 'green' :
+                            status === 'In Progress' ? 'blue' :
+                            status === 'Testing' ? 'orange' : 'red'
+                          }>
+                            {project.clientName}
+                          </Tag>
+                          {status !== 'Completed' && (
+                            <CircularProgress 
+                              value={project.progress || 0} 
+                              color={
+                                status === 'In Progress' ? '#0225FF' :
+                                status === 'Testing' ? 'orange' : '#F21E1E'
+                              } 
+                              size="60px"
+                            >
+                              <CircularProgressLabel>
+                                {Math.round(project.progress || 0)}%
+                              </CircularProgressLabel>
+                            </CircularProgress>
+                          )}
+                          {status === 'Completed' && (
+                            <Text fontSize="sm" color="gray.500">
+                              Completed on: {new Date(project.updatedAt).toLocaleDateString()}
+                            </Text>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <CircularProgress value={40} color='#0225FF'>
-                        <CircularProgressLabel>40%</CircularProgressLabel>
-                      </CircularProgress>
-                    </div>
+                    ))}
                   </div>
-                </div>
-              </div>
-              <div className='add-task-main-container'>
-                <div className='add-task-main-div'>
-                  <div className='add-task-inner-div'>
-                    <img src={book} alt="Book" />
-                    <p className='todo-text'>Testing Projects</p>
-                  </div>
-                </div>
-                <div className='task-card-container'>
-                  <p className='task-title'>Attend Nischal’s Birthday
-                    Party</p>
-                  <div className='task-desc-container'>
-                    <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                  </div>
-                  <div className='task-card-footer-container'>
-                    <div>
-                      <Tag size='lg' colorScheme='orange' borderRadius='full'>
-                        <p className='tag-text'>Testing</p>
-                      </Tag>
-                    </div>
-                    <div>
-                      <div className='task-read'>
-                        <IoReaderOutline className='read-icon' />
-                      </div>
-                    </div>
-                    <div>
-                      <CircularProgress value={40} color='orange'>
-                        <CircularProgressLabel>40%</CircularProgressLabel>
-                      </CircularProgress>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className='add-task-main-container'>
-                <div className='add-task-main-div'>
-                  <div className='add-task-inner-div'>
-                    <img src={book} alt="Book" />
-                    <p className='todo-text'>Completed Projects</p>
-                  </div>
-                </div>
-                <div className='task-card-container'>
-                  <p className='task-title'>Attend Nischal’s Birthday
-                    Party</p>
-                  <div className='task-desc-container'>
-                    <p className='task-desc'>Buy gifts on  way and pick up cake frothem the bakery. (6 PM | Fresh Elements).....n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | n  way and pick up cake frothem the bakery. (6 PM | </p>
-                  </div>
-                  <div className='task-card-footer-container'>
-                    <div>
-                      <Tag size='lg' colorScheme='green' borderRadius='full'>
-                        <p className='tag-text'>Completed</p>
-                      </Tag>
-                    </div>
-                    <div>
-                      <div className='task-read'>
-                        <IoReaderOutline className='read-icon' />
-                      </div>
-                    </div>
-                  </div>
-                  <p className='created'>Completed 2 days ago</p>
-                </div>
-              </div>
+                )
+              ))}
             </div>
           </div>
         </div>
       </div>
     </>
-  )
+  );
 }
 
-export default Projects
+export default Projects;

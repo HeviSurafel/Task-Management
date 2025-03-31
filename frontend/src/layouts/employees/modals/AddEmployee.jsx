@@ -10,27 +10,33 @@ import {
     Button,
     Input,
     Tag,
+    Select,
+    FormControl,
+    FormLabel,
+    Stack,
+    Text
 } from '@chakra-ui/react';
 import axios from 'axios';
 import { useToast, Spinner } from '@chakra-ui/react';
+import useAdminStore from '../../../store/admin.store';
 
 function AddEmployeeModal({ isOpen, onClose }) {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        employee_id: '1',
         firstName: '',
         lastName: '',
         email: '',
         phone: '',
-        residentialAddress: '',
-        cnic: '',
+        password: '',
         role: '',
         dateOfBirth: '',
         startDate: '',
         status: 'Active',
         gender: 'Male'
     });
+
+    const { addEmployee } = useAdminStore();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -43,17 +49,12 @@ function AddEmployeeModal({ isOpen, onClose }) {
     const handleGenderClick = (gender) => {
         setFormData({ ...formData, gender });
     };
-    const token = localStorage.getItem("tm_token");
-    const axiosInstance = axios.create({
-        headers: {
-            Authorization: `Bearer ${token}`
-        },
-    });
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/api/employee', formData);
+            const response = await addEmployee(formData);
             setFormData({
                 employee_id: '1',
                 firstName: '',
@@ -68,7 +69,7 @@ function AddEmployeeModal({ isOpen, onClose }) {
                 status: 'Active',
                 gender: 'Male'
             });
-            let Message = response.data.message
+            let Message = response.data.message;
             toast({
                 title: Message,
                 status: 'success',
@@ -79,92 +80,123 @@ function AddEmployeeModal({ isOpen, onClose }) {
             setLoading(false);
             onClose();
         } catch (error) {
-            let Error = error.response.data.message
-            toast({
-                title: Error,
-                status: 'error',
-                position: 'top',
-                duration: 5000,
-                isClosable: true,
-            });
+            toast(error);
             setLoading(false);
         }
     };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl" closeOnOverlayClick={false} isCentered>
             <ModalOverlay />
-            <ModalContent >
+            <ModalContent>
                 <form onSubmit={handleSubmit}>
                     <ModalHeader>Add Employee</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
-                        <Input mt={3} mb={3} type='hidden' name='employee_id' value={formData.employee_id} />
-                        <Input mt={3} mb={3} type='text' required placeholder='First Name' name='firstName' value={formData.firstName} onChange={handleChange} />
-                        <Input mt={3} mb={3} type='text' required placeholder='Last Name' name='lastName' value={formData.lastName} onChange={handleChange} />
-                        <Input mt={3} mb={3} type='email' required placeholder='Email' name='email' value={formData.email} onChange={handleChange} />
-                        <Input mt={3} mb={3} type='number' required placeholder='Phone' name='phone' value={formData.phone} onChange={handleChange} />
-                        <Input mt={3} mb={3} type='text' required placeholder='Residential Address' name='residentialAddress' value={formData.residentialAddress} onChange={handleChange} />
-                        <Input mt={3} mb={3} type='text' required placeholder='CNIC' name='cnic' value={formData.cnic} onChange={handleChange} />
-                        <Input mt={3} mb={3} type='text' required placeholder='Role' name='role' value={formData.role} onChange={handleChange} />
-                        <Input mt={3} mb={3} required placeholder="Date Of Birth" type="date" name='dateOfBirth' value={formData.dateOfBirth} onChange={handleChange} />
-                        <Input mt={3} mb={3} required placeholder="Start Date" type="date" name='startDate' value={formData.startDate} onChange={handleChange} />
-                        <div className='priority-container'>
-                            <p>Status: </p>
-                            <Tag
-                                size='lg'
-                                cursor={'pointer'}
-                                colorScheme={formData.status === 'Active' ? 'green' : 'gray'}
-                                borderRadius='full'
-                                onClick={() => handleStatusClick('Active')}
-                            >
-                                <p className='tag-text'>Active</p>
-                            </Tag>
-                            <Tag
-                                size='lg'
-                                cursor={'pointer'}
-                                colorScheme={formData.status === 'In Active' ? 'yellow' : 'gray'}
-                                borderRadius='full'
-                                onClick={() => handleStatusClick('In Active')}
-                            >
-                                <p className='tag-text'>In Active</p>
-                            </Tag>
-                            <Tag
-                                size='lg'
-                                cursor={'pointer'}
-                                colorScheme={formData.status === 'Terminated' ? 'red' : 'gray'}
-                                borderRadius='full'
-                                onClick={() => handleStatusClick('Terminated')}
-                            >
-                                <p className='tag-text'>Terminated</p>
-                            </Tag>
-                        </div>
-                        <div className='priority-container'>
-                            <p>Gender: </p>
-                            <Tag
-                                size='lg'
-                                cursor={'pointer'}
-                                colorScheme={formData.gender === 'Male' ? 'green' : 'gray'}
-                                borderRadius='full'
-                                onClick={() => handleGenderClick('Male')}
-                            >
-                                <p className='tag-text'>Male</p>
-                            </Tag>
-                            <Tag
-                                size='lg'
-                                cursor={'pointer'}
-                                colorScheme={formData.gender === 'Female' ? 'yellow' : 'gray'}
-                                borderRadius='full'
-                                onClick={() => handleGenderClick('Female')}
-                            >
-                                <p className='tag-text'>Female</p>
-                            </Tag>
-                        </div>
+                        <Stack spacing={4}>
+                            <Input type='text' required placeholder='First Name' name='firstName' value={formData.firstName} onChange={handleChange} />
+                            <Input type='text' required placeholder='Last Name' name='lastName' value={formData.lastName} onChange={handleChange} />
+                            <Input type='email' required placeholder='Email' name='email' value={formData.email} onChange={handleChange} />
+                            <Input type='number' required placeholder='Phone' name='phone' value={formData.phone} onChange={handleChange} />
+                            <Input type='text' required placeholder='Password' name='password' value={formData.password} onChange={handleChange} />
+                            
+                            <FormControl isRequired>
+                                <Select 
+                                    placeholder="Select Role" 
+                                    name="role" 
+                                    value={formData.role} 
+                                    onChange={handleChange}
+                                >
+                                    <option value="Admin">Admin</option>
+                                    <option value="Employee">Employee</option>
+                                </Select>
+                            </FormControl>
+
+                            <FormControl isRequired>
+                                <FormLabel>Date of Birth</FormLabel>
+                                <Input 
+                                    placeholder="Date Of Birth" 
+                                    type="date" 
+                                    name='dateOfBirth' 
+                                    value={formData.dateOfBirth} 
+                                    onChange={handleChange} 
+                                />
+                                <Text fontSize="sm" color="gray.500">Select employee's date of birth</Text>
+                            </FormControl>
+
+                            <FormControl isRequired>
+                                <FormLabel>Start Date</FormLabel>
+                                <Input 
+                                    placeholder="Start Date" 
+                                    type="date" 
+                                    name='startDate' 
+                                    value={formData.startDate} 
+                                    onChange={handleChange} 
+                                />
+                                <Text fontSize="sm" color="gray.500">Select employee's start date</Text>
+                            </FormControl>
+
+                            <div className='priority-container'>
+                                <p>Status: </p>
+                                <Tag
+                                    size='lg'
+                                    cursor={'pointer'}
+                                    colorScheme={formData.status === 'Active' ? 'green' : 'gray'}
+                                    borderRadius='full'
+                                    onClick={() => handleStatusClick('Active')}
+                                >
+                                    <p className='tag-text'>Active</p>
+                                </Tag>
+                                <Tag
+                                    size='lg'
+                                    cursor={'pointer'}
+                                    colorScheme={formData.status === 'In Active' ? 'yellow' : 'gray'}
+                                    borderRadius='full'
+                                    onClick={() => handleStatusClick('In Active')}
+                                >
+                                    <p className='tag-text'>In Active</p>
+                                </Tag>
+                                <Tag
+                                    size='lg'
+                                    cursor={'pointer'}
+                                    colorScheme={formData.status === 'Terminated' ? 'red' : 'gray'}
+                                    borderRadius='full'
+                                    onClick={() => handleStatusClick('Terminated')}
+                                >
+                                    <p className='tag-text'>Terminated</p>
+                                </Tag>
+                            </div>
+
+                            <div className='priority-container'>
+                                <p>Gender: </p>
+                                <Tag
+                                    size='lg'
+                                    cursor={'pointer'}
+                                    colorScheme={formData.gender === 'Male' ? 'green' : 'gray'}
+                                    borderRadius='full'
+                                    onClick={() => handleGenderClick('Male')}
+                                >
+                                    <p className='tag-text'>Male</p>
+                                </Tag>
+                                <Tag
+                                    size='lg'
+                                    cursor={'pointer'}
+                                    colorScheme={formData.gender === 'Female' ? 'yellow' : 'gray'}
+                                    borderRadius='full'
+                                    onClick={() => handleGenderClick('Female')}
+                                >
+                                    <p className='tag-text'>Female</p>
+                                </Tag>
+                            </div>
+                        </Stack>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant='solid' color="white" bg='darkcyan' mr={3} onClick={onClose}>
                             Close
                         </Button>
-                        <Button variant='outline' type="submit">{loading ? <Spinner color='green' /> : 'Add Employee'}</Button>
+                        <Button variant='outline' type="submit">
+                            {loading ? <Spinner color='green' /> : 'Add Employee'}
+                        </Button>
                     </ModalFooter>
                 </form>
             </ModalContent>

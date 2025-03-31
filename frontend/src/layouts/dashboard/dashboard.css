@@ -1,44 +1,86 @@
-.welcome-main-container {
+.app-main-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f7fa;
+  }
+  
+  .app-main-left-container {
+    width: 250px;
+    position: fixed;
+    height: 100vh;
+    z-index: 10;
+  }
+  
+  .app-main-right-container {
+    margin-left: 250px;
+    flex: 1;
+    padding: 20px;
+    background-color: #f5f7fa;
+  }
+  
+  @media (max-width: 768px) {
+    .app-main-left-container {
+      width: 100%;
+      position: relative;
+      height: auto;
+    }
+    
+    .app-main-right-container {
+      margin-left: 0;
+      padding: 15px;
+    }
+  }
+  
+  /* Stats cards */
+  .stats-container {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
     background-color: white;
-    border-radius: 30px;
-    min-height: 200px;
-    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-    width: 100%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stats-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 15px;
+  }
+  
+  .stats-num {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2d3748;
+  }
+  
+  .stats-text {
+    font-size: 14px;
+    color: #718096;
+  }
+  
+  /* Progress indicators */
+  .task-status-progress-main-container {
     display: flex;
-    flex-direction: row;
-    padding: 2rem;
-}
-
-.welcome-left-container {
-    width: 60%;
-}
-
-.welcome-right-container {
-    width: 40%;
-}
-
-.mng-text {
-    font-family: Inter;
-    font-size: 23.52px;
-    font-weight: 600;
-    color: darkcyan;
+    justify-content: space-around;
+    padding: 20px 0;
+  }
+  
+  .completed, .progress, .pending {
     text-align: center;
-}
-
-.mng-para {
-    font-family: Inter;
-    font-size: 19.6px;
-    font-weight: 400;
-    color: grey;
-    text-align: center;
-}
-
-.welcome-right-container {
-    display: flex;
-    justify-content: center;
-}
-
-.welcome-img {
-    height: 100%;
-    width: 50%;
-}
+    margin-top: 10px;
+    font-weight: 500;
+  }
+  
+  .completed {
+    color: #38a169;
+  }
+  
+  .progress {
+    color: #3182ce;
+  }
+  
+  .pending {
+    color: #e53e3e;
+  }

@@ -15,13 +15,14 @@ import {
 } from '@chakra-ui/react';
 import axios from 'axios';
 import { useToast, Spinner } from '@chakra-ui/react';
-
-function AddTaskModal({ isOpen, onClose }) {
+import useAdminStore from '../../../store/admin.store';
+function AddTaskModal({ isOpen, onClose, projects, employees }) {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [employeesData, setEmployeesData] = useState([]);
     const [projectsData, setProjectsData] = useState([]);
-
+console.log("projects",projects)
+const {createTask} = useAdminStore();
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -30,47 +31,33 @@ function AddTaskModal({ isOpen, onClose }) {
         startDate: '',
         priority: 'Most Important'
     });
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
     const handleTagClick = (priority) => {
         setFormData({ ...formData, priority });
     };
 
-    const token = localStorage.getItem("tm_token");
-    const axiosInstance = axios.create({
-        headers: {
-            Authorization: `Bearer ${token}`
-        },
-    });
-
-    const getEmployees = async () => {
-        try {
-            const response = await axios.get('api/employees')
-            setEmployeesData(response.data)
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-    const getProjects = async () => {
-        try {
-            const response = await axios.get('api/projects')
-            setProjectsData(response.data)
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
+  
     useEffect(() => {
-        getEmployees()
-        getProjects()
-    }, [])
-
+        // Set employees data from props if available
+        if (employees?.data?.data) {
+            setEmployeesData(employees.data.data);
+        }
+        
+        // Set projects data from props if available
+        if (projects?.data) {
+            setProjectsData(projects.data);
+        }
+    }, [employees, projects]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axiosInstance.post('/api/task', formData);
+          await createTask(formData);
             setFormData({
                 title: '',
                 description: '',
@@ -79,9 +66,8 @@ function AddTaskModal({ isOpen, onClose }) {
                 startDate: '',
                 priority: 'Most Important'
             });
-            let Message = response.data.message
             toast({
-                title: Message,
+                title: 'Task added successfully',
                 status: 'success',
                 position: 'top',
                 duration: 5000,
@@ -89,10 +75,10 @@ function AddTaskModal({ isOpen, onClose }) {
             });
             setLoading(false);
             onClose();
+            
         } catch (error) {
-            let Error = error.response.data.message
             toast({
-                title: Error,
+                title: error.response?.data?.message ,
                 status: 'error',
                 position: 'top',
                 duration: 5000,
@@ -101,27 +87,76 @@ function AddTaskModal({ isOpen, onClose }) {
             setLoading(false);
         }
     };
+console.log("projectsData",projectsData)
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl" closeOnOverlayClick={false} isCentered>
             <ModalOverlay />
-            <ModalContent >
+            <ModalContent>
                 <form onSubmit={handleSubmit}>
                     <ModalHeader>Add Task</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
-                        <Input mt={3} mb={3} placeholder='Title' type='text' required name='title' value={formData.title} onChange={handleChange} />
-                        <Textarea rows={7} mt={3} mb={3} placeholder='Description' type='text' required name='description' value={formData.description} onChange={handleChange} />
-                        <Select mt={3} mb={3} placeholder='Assign To (Employee)' required name='assignTo' value={formData.assignTo} onChange={handleChange}>
+                        <Input 
+                            mt={3} 
+                            mb={3} 
+                            placeholder='Title' 
+                            type='text' 
+                            required 
+                            name='title' 
+                            value={formData.title} 
+                            onChange={handleChange} 
+                        />
+                        <Textarea 
+                            rows={7} 
+                            mt={3} 
+                            mb={3} 
+                            placeholder='Description' 
+                            type='text' 
+                            required 
+                            name='description' 
+                            value={formData.description} 
+                            onChange={handleChange} 
+                        />
+                        <Select 
+                            mt={3} 
+                            mb={3} 
+                            placeholder='Assign To (Employee)' 
+                            required 
+                            name='assignTo' 
+                            value={formData.assignTo} 
+                            onChange={handleChange}
+                        >
                             {employeesData.map(employee => (
-                                <option key={employee._id} value={employee._id}>{`${employee.firstName} ${employee.lastName}`}</option>
+                                <option key={employee._id} value={employee._id}>
+                                    {`${employee.firstName} ${employee.lastName}`}
+                                </option>
                             ))}
                         </Select>
-                        <Select mt={3} mb={3} placeholder='Project' required name='project' value={formData.project} onChange={handleChange}>
+                        <Select 
+                            mt={3} 
+                            mb={3} 
+                            placeholder='Project' 
+                            required 
+                            name='project' 
+                            value={formData.project} 
+                            onChange={handleChange}
+                        >
                             {projectsData.map(project => (
-                                <option key={project._id} value={project._id}>{project.title}</option>
+                                <option key={project._id} value={project._id}>
+                                    {project.title}
+                                </option>
                             ))}
                         </Select>
-                        <Input mt={3} mb={3} placeholder='Start Date' type='date' required name='startDate' value={formData.startDate} onChange={handleChange} />
+                        <Input 
+                            mt={3} 
+                            mb={3} 
+                            placeholder='Start Date' 
+                            type='date' 
+                            required 
+                            name='startDate' 
+                            value={formData.startDate} 
+                            onChange={handleChange} 
+                        />
 
                         <div className='priority-container'>
                             <p>Priority: </p>
@@ -132,7 +167,7 @@ function AddTaskModal({ isOpen, onClose }) {
                                 borderRadius='full'
                                 onClick={() => handleTagClick('Most Important')}
                             >
-                                <p className='tag-text'>Most Important</p>
+                                Most Important
                             </Tag>
                             <Tag
                                 size='lg'
@@ -141,7 +176,7 @@ function AddTaskModal({ isOpen, onClose }) {
                                 borderRadius='full'
                                 onClick={() => handleTagClick('Important')}
                             >
-                                <p className='tag-text'>Important</p>
+                                Important
                             </Tag>
                             <Tag
                                 size='lg'
@@ -150,7 +185,7 @@ function AddTaskModal({ isOpen, onClose }) {
                                 borderRadius='full'
                                 onClick={() => handleTagClick('Least Important')}
                             >
-                                <p className='tag-text'>Least Important</p>
+                                Least Important
                             </Tag>
                         </div>
                     </ModalBody>
@@ -158,7 +193,9 @@ function AddTaskModal({ isOpen, onClose }) {
                         <Button variant='solid' color="white" bg='darkcyan' mr={3} onClick={onClose}>
                             Close
                         </Button>
-                        <Button variant='outline' type='submit'>{loading ? <Spinner color='green' /> : 'Add Task'}</Button>
+                        <Button variant='outline' type='submit'>
+                            {loading ? <Spinner color='green' /> : 'Add Task'}
+                        </Button>
                     </ModalFooter>
                 </form>
             </ModalContent>
