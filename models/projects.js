@@ -27,6 +27,21 @@ const projectSchema = new mongoose.Schema({
         enum: ['Most Important', 'Important', 'Least Important'],
         required: true,
     },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    files: [{
+        path: String,
+        originalName: String,
+        mimeType: String,
+        size: Number,
+        uploadedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 });
 
 module.exports = mongoose.model('Project', projectSchema);

@@ -1,15 +1,20 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Notification = require('../models/notifications');
-const asyncHandler = require('express-async-handler');
-router.post('/notification', asyncHandler(async (req, res) => {
-    try {
-        const { title, description } = req.body;
-        const newNotification = new Notification({ title, description });
-        await newNotification.save();
-        res.status(201).json({ message: 'Notification added successfully' });
-    } catch (error) {
-        res.status(500).json({ message: error });
-    }
-}));
-module.exports = router
+const notificationController = require("../controllers/notificationController");
+
+// Create a new notification
+router.post("/", notificationController.createNotification);
+
+// Get all notifications
+router.get("/", notificationController.getAllNotifications);
+
+// Get notifications by employee ID
+router.get("/:employeeId", notificationController.getNotificationsByEmployee);
+
+// Mark a notification as read
+router.put("/:notificationId/read", notificationController.markAsRead);
+
+// Delete a notification
+router.delete("/:notificationId", notificationController.deleteNotification);
+
+module.exports = router;
