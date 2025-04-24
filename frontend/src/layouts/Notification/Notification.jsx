@@ -1,79 +1,38 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import styles from './TaskNotifications.module.css';
 import { 
   FaBell, FaCheck, FaTrashAlt, FaTasks, FaCommentAlt, 
   FaExclamationTriangle, FaChevronDown, FaFilter 
 } from 'react-icons/fa';
-import { BsThreeDotsVertical, BsBellFill } from 'react-icons/bs';
-import styles from './TaskNotifications.module.css';
+import { BsBellFill } from 'react-icons/bs';
+import useNotificationStore from "../../store/notification";
+import useUserStore from "../../store/auth";
 
 const TaskNotifications = () => {
-  // Mock notifications data
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      title: 'Project Deadline Approaching',
-      message: 'The "Website Redesign" project is due in 2 days',
-      type: 'task',
-      priority: 'high',
-      date: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-      read: false,
-      project: 'Website Redesign',
-      assignedBy: 'Sarah Johnson'
-    },
-    {
-      id: '2',
-      title: 'New Task Assigned',
-      message: 'You\'ve been assigned to "Create user dashboard"',
-      type: 'task',
-      priority: 'medium',
-      date: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-      read: false,
-      project: 'Admin Portal',
-      assignedBy: 'Michael Chen'
-    },
-    {
-      id: '3',
-      title: 'Task Completed',
-      message: 'You completed "Fix login page bugs"',
-      type: 'task',
-      priority: 'low',
-      date: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-      read: true,
-      project: 'Customer Portal',
-      assignedBy: 'System'
-    },
-    {
-      id: '4',
-      title: 'Team Message',
-      message: 'Daily standup meeting starts in 15 minutes',
-      type: 'message',
-      priority: 'medium',
-      date: new Date(Date.now() - 1000 * 60 * 60 * 36), // 36 hours ago
-      read: true,
-      project: 'General',
-      assignedBy: 'Emma Wilson'
-    },
-    {
-      id: '5',
-      title: 'Urgent: Server Issue',
-      message: 'Production server experiencing high CPU usage',
-      type: 'alert',
-      priority: 'high',
-      date: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
-      read: true,
-      project: 'Infrastructure',
-      assignedBy: 'System'
-    }
-  ]);
-
+  // State management hooks
+  const {
+    notifications,
+    fetchNotificationsByEmployee,
+    markNotificationAsRead,
+    deleteNotification
+  } = useNotificationStore();
+  
+  const { user } = useUserStore();
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [showSortOptions, setShowSortOptions] = useState(false);
 
+  // Fetch notifications on component mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchNotificationsByEmployee(user.id);
+    }
+  }, [user?.id,notifications, fetchNotificationsByEmployee]);
+  console.log("notifications",notifications)
   // Filter and sort notifications
   const filteredNotifications = notifications
-    .filter(notification => {
+    ?.filter(notification => {
       if (filter === 'unread') return !notification.read;
       if (filter === 'read') return notification.read;
       return true;
@@ -83,7 +42,7 @@ const TaskNotifications = () => {
       return notification.priority === priorityFilter;
     })
     .sort((a, b) => {
-      if (sortBy === 'date') return b.date - a.date;
+      if (sortBy === 'date') return new Date(b.date) - new Date(a.date);
       if (sortBy === 'priority') {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
         return priorityOrder[b.priority] - priorityOrder[a.priority];
@@ -91,24 +50,22 @@ const TaskNotifications = () => {
       return 0;
     });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAsRead = (id) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
-  };
+  const unreadCount = notifications?.filter(n => !n.read).length;
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
-  };
-
-  const deleteNotification = (id) => {
-    setNotifications(notifications.filter(n => n.id !== id));
+    notifications.forEach(notification => {
+      if (!notification.read) {
+        markNotificationAsRead(notification._id);
+      }
+    });
   };
 
   const deleteAll = () => {
-    setNotifications(notifications.filter(n => n.read));
+    notifications.forEach(notification => {
+      if (notification.read) {
+        deleteNotification(notification._id);
+      }
+    });
   };
 
   const getPriorityClass = (priority) => {
@@ -123,9 +80,18 @@ const TaskNotifications = () => {
   const getIconClass = (type) => {
     switch(type) {
       case 'task': return styles.notificationIconTask;
-      case 'message': return styles.notificationIconMessage;
+      case 'comment': return styles.notificationIconMessage;
       case 'alert': return styles.notificationIconAlert;
       default: return styles.notificationIconDefault;
+    }
+  };
+
+  const getNotificationIcon = (type) => {
+    switch(type) {
+      case 'task': return <FaTasks />;
+      case 'comment': return <FaCommentAlt />;
+      case 'alert': return <FaExclamationTriangle />;
+      default: return <BsBellFill />;
     }
   };
 
@@ -146,6 +112,7 @@ const TaskNotifications = () => {
           <button
             onClick={markAllAsRead}
             className={`${styles.button} ${styles.indigoButton}`}
+            disabled={unreadCount === 0}
           >
             <FaCheck className={styles.buttonIcon} />
             Mark all as read
@@ -153,6 +120,7 @@ const TaskNotifications = () => {
           <button
             onClick={deleteAll}
             className={`${styles.button} ${styles.redButton}`}
+            disabled={notifications?.length - unreadCount === 0}
           >
             <FaTrashAlt className={styles.buttonIcon} />
             Clear read
@@ -250,7 +218,7 @@ const TaskNotifications = () => {
 
       {/* Notifications List */}
       <div className={styles.notificationsList}>
-        {filteredNotifications.length === 0 ? (
+        {filteredNotifications?.length === 0 ? (
           <div className={styles.emptyState}>
             <FaBell className={styles.emptyIcon} />
             <h3 className={styles.emptyTitle}>No notifications found</h3>
@@ -262,19 +230,16 @@ const TaskNotifications = () => {
           </div>
         ) : (
           <ul className={styles.divider}>
-            {filteredNotifications.map(notification => (
+            {filteredNotifications?.map(notification => (
               <li 
-                key={notification.id} 
+                key={notification._id} 
                 className={`${styles.notificationItem} ${!notification.read ? styles.notificationUnread : ''}`}
               >
                 <div className={styles.notificationContent}>
                   <div className={styles.notificationHeader}>
                     <div className={`${styles.notificationIconContainer} ${!notification.read ? styles.notificationIconContainerUnread : styles.notificationIconContainerRead}`}>
                       <span className={getIconClass(notification.type)}>
-                        {notification.type === 'task' && <FaTasks />}
-                        {notification.type === 'message' && <FaCommentAlt />}
-                        {notification.type === 'alert' && <FaExclamationTriangle />}
-                        {!['task', 'message', 'alert'].includes(notification.type) && <BsBellFill />}
+                        {getNotificationIcon(notification.type)}
                       </span>
                     </div>
                     <div className={styles.notificationDetails}>
@@ -282,33 +247,31 @@ const TaskNotifications = () => {
                         <h3 className={`${styles.notificationTitle} ${!notification.read ? styles.notificationTitleUnread : styles.notificationTitleRead}`}>
                           {notification.title}
                         </h3>
-                        <span className={`${styles.priorityBadge} ${getPriorityClass(notification.priority)}`}>
-                          {notification.priority}
-                        </span>
+                        {notification.priority && (
+                          <span className={`${styles.priorityBadge} ${getPriorityClass(notification.priority)}`}>
+                            {notification.priority}
+                          </span>
+                        )}
                       </div>
-                      <p className={styles.notificationMessage}>{notification.message}</p>
+                      <p className={styles.notificationMessage}>{notification.description}</p>
                       
                       <div className={styles.notificationMeta}>
                         <div className={styles.metaItem}>
-                          <span className={styles.metaLabel}>Project:</span>
-                          <span className={styles.metaLink}>{notification.project}</span>
-                        </div>
-                        <div className={styles.metaItem}>
-                          <span className={styles.metaLabel}>From:</span>
-                          <span className={styles.metaValue}>{notification.assignedBy}</span>
-                        </div>
-                        <div className={styles.metaItem}>
                           <span className={styles.metaLabel}>Date:</span>
                           <span className={styles.metaValue}>
-                            {notification.date.toLocaleDateString()} at {notification.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            {new Date(notification.date).toLocaleDateString()} at {new Date(notification.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </span>
+                        </div>
+                        <div className={styles.metaItem}>
+                          <span className={styles.metaLabel}>Type:</span>
+                          <span className={styles.metaValue}>{notification.type}</span>
                         </div>
                       </div>
                     </div>
                     <div className={styles.notificationActions}>
                       {!notification.read && (
                         <button
-                          onClick={() => markAsRead(notification.id)}
+                          onClick={() => markNotificationAsRead(notification._id)}
                           className={`${styles.actionButton} ${styles.indigoActionButton}`}
                           title="Mark as read"
                         >
@@ -316,7 +279,7 @@ const TaskNotifications = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => deleteNotification(notification.id)}
+                        onClick={() => deleteNotification(notification._id)}
                         className={`${styles.actionButton} ${styles.redActionButton}`}
                         title="Delete"
                       >
@@ -334,10 +297,10 @@ const TaskNotifications = () => {
       {/* Stats Footer */}
       <div className={styles.statsFooter}>
         <div>
-          Showing {filteredNotifications.length} of {notifications.length} notifications
+          Showing {filteredNotifications?.length} of {notifications?.length} notifications
         </div>
         <div>
-          {unreadCount} unread • {notifications.length - unreadCount} read
+          {unreadCount} unread • {notifications?.length - unreadCount} read
         </div>
       </div>
     </div>

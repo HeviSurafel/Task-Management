@@ -46,3 +46,15 @@
     line-height: 19.5px;
     color: #F8F9FB;
 }
+.input-main-container {
+    position: relative;
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+}

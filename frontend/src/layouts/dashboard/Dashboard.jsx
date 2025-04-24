@@ -51,7 +51,7 @@ function Dashboard() {
     };
     fetchData();
   }, [getDashboard]);
-
+console.log("dashboardData",dashboardData)
   const calculatePercentage = (value, total) => {
     if (total === 0) return 0;
     return Math.round((value / total) * 100);
@@ -304,15 +304,15 @@ function Dashboard() {
         </Grid>
 
         {/* Additional Statistics */}
-        {(employees.genderDistribution.length > 0 ||
-          employees.departmentDistribution.length > 0) && (
+        {(employees?.genderDistribution.length > 0 ||
+          employees?.departmentDistribution.length > 0) && (
           <Card borderRadius="xl" boxShadow="md" bg={cardBg} mb={6}>
             <CardHeader>
               <Heading size="md">Employee Demographics</Heading>
             </CardHeader>
             <CardBody>
               <Stack divider={<StackDivider />} spacing={4}>
-                {employees.genderDistribution.length > 0 && (
+                {employees.genderDistribution?.length > 0 && (
                   <Box>
                     <Heading size="sm" mb={4}>
                       Gender Distribution
@@ -339,13 +339,13 @@ function Dashboard() {
                   </Box>
                 )}
 
-                {employees.departmentDistribution.length > 0 && (
+                {employees?.departmentDistribution?.length > 0 && (
                   <Box>
                     <Heading size="sm" mb={4}>
                       Department Distribution
                     </Heading>
                     <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} spacing={4}>
-                      {employees.departmentDistribution.map((item, index) => (
+                      {employees?.departmentDistribution?.map((item, index) => (
                         <Card key={index} variant="outline" p={3}>
                           <Text fontSize="sm" color={textColor} mb={1}>
                             {item._id || "Unknown"}

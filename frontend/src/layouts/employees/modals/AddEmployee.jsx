@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
     Modal,
@@ -31,6 +32,7 @@ function AddEmployeeModal({ isOpen, onClose }) {
         password: '',
         role: '',
         dateOfBirth: '',
+        department:'',
         startDate: '',
         status: 'Active',
         gender: 'Male'
@@ -66,12 +68,13 @@ function AddEmployeeModal({ isOpen, onClose }) {
                 role: '',
                 dateOfBirth: '',
                 startDate: '',
+                department:'',
                 status: 'Active',
                 gender: 'Male'
             });
             let Message = response.data.message;
             toast({
-                title: Message,
+                title: "sucessfull created user",
                 status: 'success',
                 position: 'top',
                 duration: 5000,
@@ -107,11 +110,26 @@ function AddEmployeeModal({ isOpen, onClose }) {
                                     value={formData.role} 
                                     onChange={handleChange}
                                 >
-                                    <option value="Admin">Admin</option>
+                                    <option value="Ceo">Ceo</option>
                                     <option value="Employee">Employee</option>
+                                    <option value="Department Head">Department Head</option>
+                                    <option value="Supervisor">Supervisor</option>
                                 </Select>
                             </FormControl>
-
+                            <FormControl isRequired>
+                                <Select 
+                                    placeholder="Select departement" 
+                                    name="department" 
+                                    value={formData.department} 
+                                    onChange={handleChange}
+                                >
+                                    <option value="Developer">Developer</option>
+                                    <option value="Graphics Design">Graphics Design</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Promotion">Promotion</option>
+                                    <option value="Video Editing">Video Editing</option>
+                                </Select>
+                            </FormControl>
                             <FormControl isRequired>
                                 <FormLabel>Date of Birth</FormLabel>
                                 <Input 

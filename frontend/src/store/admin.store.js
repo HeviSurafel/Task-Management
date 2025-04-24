@@ -87,13 +87,57 @@ const useAdminStore = create((set, get) => ({
             set({ loading: false });
         }
     },
+    getTasks: async () => {
+        set({ loading: true });
+        try {
+            const { data } = await axios.get("/tasks");
+            set({ tasks: data });
+        } catch (error) {
+            set({ error: error.response?.data?.message || "Failed to get tasks" });
+        } finally {
+            set({ loading: false });
+        }
+    },
+    updateTaskStatus: async (taskId, status) => {
+        set({ loading: true, error: null });
+        try {
+            const response = await axios.put(`/task/${taskId}/status`, { status });
+            set((state) => ({
+                tasks: state.tasks.map((task) =>
+                    task._id === taskId ? { ...task, status: response.data.data.newStatus } : task
+                ),
+                loading: false,
+            }));
+        } catch (error) {
+            set({ error: error.response?.data?.message || "Failed to update task status", loading: false });
+        } 
+    },
+    ///task/admin/:id
+    getAdminAssignedTasks: async (id) => {
+        set({ loading: true });
+        try {
+            const { data } = await axios.get(`/task/admin/${id}`);
+            set({ adminTasks: data });
+        } catch (error) {
+            set({ error: error.response?.data?.message || "Failed to get tasks" });
+        } finally {
+            set({ loading: false });
+        }
+    },
+
     createTask: async (formData) => {
         set({ loading: true });
         try {
-            const response = await axios.post("/task", formData);
-            set({ tasks: response });
+            const { data } = await axios.post("/task", formData);
+            // Update the tasks array with the new task
+            set((state) => ({
+                tasks: [...state.tasks, data],
+                error: null
+            }));
+            return data; // Return the created task for immediate use if needed
         } catch (error) {
             set({ error: error.response?.data?.message || "Failed to add task" });
+            throw error; // Re-throw the error to handle it in the component
         } finally {
             set({ loading: false });
         }

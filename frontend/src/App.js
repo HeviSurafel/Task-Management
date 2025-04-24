@@ -8,7 +8,9 @@ import Tasks from './layouts/tasks/Tasks';
 import ProtectedRoute from './ProtectedRoute';
 import NotificationsPage from './layouts/Notification/Notification';
 import Layout from './Layout';
-
+import TaskAndChat from './layouts/Taskandchat/taskandchat';
+import EmployeeOverview from "./EmployeeDashbard/EmployeeOverview.jsx"
+import EmployeeHistory from './layouts/employee History/employeeHistroy.jsx';
 function App() {
   return (
     <Router>
@@ -20,9 +22,14 @@ function App() {
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/admin/employees" element={<Employees />} />
+          <Route path="/admin/taskandchat" element={<TaskAndChat />} />
           <Route path="/admin/projects" element={<Projects />} />
           <Route path="/admin/tasks" element={<Tasks />} />
-          <Route path="/admin/notification" element={<NotificationsPage />} />
+          <Route path="/admin/notification" element={<NotificationsPage />}/>
+          <Route path="/Employee/taskHistory" element={<EmployeeHistory />}/>
+          <Route path="/Employee/notification" element={<NotificationsPage />}/>
+          <Route path="/employee/taskandchat" element={<TaskAndChat />}/>
+          <Route path="/employee/overview" element={<EmployeeOverview />}/>
         </Route>
       </Routes>
     </Router>

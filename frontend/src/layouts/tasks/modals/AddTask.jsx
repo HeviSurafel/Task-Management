@@ -12,60 +12,121 @@ import {
     Textarea,
     Tag,
     Select,
+    Flex,
+    Box,
+    Heading,
+    Divider,
+    useDisclosure,
+    Collapse
 } from '@chakra-ui/react';
-import axios from 'axios';
 import { useToast, Spinner } from '@chakra-ui/react';
 import useAdminStore from '../../../store/admin.store';
+import useUserStore from '../../../store/auth';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+
 function AddTaskModal({ isOpen, onClose, projects, employees }) {
     const toast = useToast();
-    const [loading, setLoading] = useState(false);
-    const [employeesData, setEmployeesData] = useState([]);
-    const [projectsData, setProjectsData] = useState([]);
-console.log("projects",projects)
-const {createTask} = useAdminStore();
+    const { user } = useUserStore();
+    const { createTask, loading } = useAdminStore();
+    const { isOpen: isDeptOpen, onToggle: onToggleDept } = useDisclosure();
+console.log("employees",employees)
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         assignTo: '',
+        department: '',
         project: '',
         startDate: '',
-        priority: 'Most Important'
+        dueDate: '',
+        priority: 'Most Important',
+        createdBy: user?.id || ''
     });
 
+    const [filteredEmployees, setFilteredEmployees] = useState([]);
+    const [employeesByDepartment, setEmployeesByDepartment] = useState({});
+    const [projectsData, setProjectsData] = useState([]);
+
+    const departments = ['Developer', 'Graphics Design', 'Marketing', 'Promotion', 'Video Editing'];
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        // When department changes, filter employees
+        if (name === 'department') {
+            const filtered = employees.data.data.filter(emp => emp.department === value);
+            setFilteredEmployees(filtered);
+            setFormData(prev => ({ ...prev, assignTo: '' })); // Reset assignee when department changes
+        }
     };
 
     const handleTagClick = (priority) => {
         setFormData({ ...formData, priority });
     };
 
-  
     useEffect(() => {
-        // Set employees data from props if available
         if (employees?.data?.data) {
-            setEmployeesData(employees.data.data);
+            // Group employees by department
+            const grouped = employees.data.data.reduce((acc, employee) => {
+                const dept = employee.department;
+                if (!acc[dept]) acc[dept] = [];
+                acc[dept].push(employee);
+                return acc;
+            }, {});
+            setEmployeesByDepartment(grouped);
         }
-        
-        // Set projects data from props if available
+
         if (projects?.data) {
             setProjectsData(projects.data);
         }
-    }, [employees, projects]);
+
+        if (user?.id) {
+            setFormData(prev => ({ ...prev, createdBy: user.id }));
+        }
+    }, [employees, projects, user]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         try {
-          await createTask(formData);
+            // Validate due date is after start date
+            if (formData.dueDate && formData.startDate && new Date(formData.dueDate) < new Date(formData.startDate)) {
+                toast({
+                    title: 'Due date must be after start date',
+                    status: 'error',
+                    position: 'top',
+                    duration: 5000,
+                    isClosable: true,
+                });
+                return;
+            }
+
+            // Validate department is selected when assigning to someone
+            if (formData.assignTo && !formData.department) {
+                toast({
+                    title: 'Please select a department first',
+                    status: 'error',
+                    position: 'top',
+                    duration: 5000,
+                    isClosable: true,
+                });
+                return;
+            }
+
+            await createTask(formData);
+            
+            // Reset form
             setFormData({
                 title: '',
                 description: '',
                 assignTo: '',
+                department: '',
                 project: '',
                 startDate: '',
-                priority: 'Most Important'
+                dueDate: '',
+                priority: 'Most Important',
+                createdBy: user?.id || ''
             });
+            
             toast({
                 title: 'Task added successfully',
                 status: 'success',
@@ -73,21 +134,19 @@ const {createTask} = useAdminStore();
                 duration: 5000,
                 isClosable: true,
             });
-            setLoading(false);
-            onClose();
             
+            onClose();
         } catch (error) {
             toast({
-                title: error.response?.data?.message ,
+                title: error.response?.data?.message || 'Failed to create task',
                 status: 'error',
                 position: 'top',
                 duration: 5000,
                 isClosable: true,
             });
-            setLoading(false);
         }
     };
-console.log("projectsData",projectsData)
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl" closeOnOverlayClick={false} isCentered>
             <ModalOverlay />
@@ -117,21 +176,62 @@ console.log("projectsData",projectsData)
                             value={formData.description} 
                             onChange={handleChange} 
                         />
-                        <Select 
-                            mt={3} 
-                            mb={3} 
-                            placeholder='Assign To (Employee)' 
-                            required 
-                            name='assignTo' 
-                            value={formData.assignTo} 
-                            onChange={handleChange}
-                        >
-                            {employeesData.map(employee => (
-                                <option key={employee._id} value={employee._id}>
-                                    {`${employee.firstName} ${employee.lastName}`}
-                                </option>
-                            ))}
-                        </Select>
+
+                        <Box mb={4}>
+                            <Flex 
+                                justifyContent="space-between" 
+                                alignItems="center" 
+                                cursor="pointer" 
+                                onClick={onToggleDept}
+                                p={2}
+                                bg="gray.50"
+                                borderRadius="md"
+                            >
+                                <Heading size="sm">Department Assignment</Heading>
+                                {isDeptOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                            </Flex>
+                            <Collapse in={isDeptOpen} animateOpacity>
+                                <Box p={4} borderWidth="1px" borderRadius="md" mt={2}>
+                                    <Select 
+                                        mt={3} 
+                                        mb={3} 
+                                        placeholder='Select Department' 
+                                        name='department' 
+                                        value={formData.department} 
+                                        onChange={handleChange}
+                                        required={!!formData.assignTo}
+                                    >
+                                        {departments.map(dept => (
+                                            <option key={dept} value={dept}>
+                                                {dept}
+                                            </option>
+                                        ))}
+                                    </Select>
+
+                                    {formData.department && (
+                                        <>
+                                            <Divider my={3} />
+                                            <Select 
+                                                mt={3} 
+                                                mb={3} 
+                                                placeholder='Assign To (Optional)' 
+                                                name='assignTo' 
+                                                value={formData.assignTo} 
+                                                onChange={handleChange}
+                                            >
+                                                <option value="">None (Assign to whole department)</option>
+                                                {employeesByDepartment[formData.department]?.map(employee => (
+                                                    <option key={employee._id} value={employee._id}>
+                                                        {`${employee.firstName} ${employee.lastName}`}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                        </>
+                                    )}
+                                </Box>
+                            </Collapse>
+                        </Box>
+
                         <Select 
                             mt={3} 
                             mb={3} 
@@ -147,19 +247,30 @@ console.log("projectsData",projectsData)
                                 </option>
                             ))}
                         </Select>
-                        <Input 
-                            mt={3} 
-                            mb={3} 
-                            placeholder='Start Date' 
-                            type='date' 
-                            required 
-                            name='startDate' 
-                            value={formData.startDate} 
-                            onChange={handleChange} 
-                        />
 
-                        <div className='priority-container'>
-                            <p>Priority: </p>
+                        <Flex gap={3} mt={3} mb={3}>
+                            <Input 
+                                flex={1}
+                                placeholder='Start Date' 
+                                type='date' 
+                                required 
+                                name='startDate' 
+                                value={formData.startDate} 
+                                onChange={handleChange} 
+                            />
+                            <Input 
+                                flex={1}
+                                placeholder='Due Date' 
+                                type='date' 
+                                name='dueDate' 
+                                value={formData.dueDate} 
+                                onChange={handleChange}
+                                min={formData.startDate}
+                            />
+                        </Flex>
+
+                        <Flex align="center" gap={3} mt={4} mb={4}>
+                            <Box>Priority:</Box>
                             <Tag
                                 size='lg'
                                 cursor={'pointer'}
@@ -187,14 +298,19 @@ console.log("projectsData",projectsData)
                             >
                                 Least Important
                             </Tag>
-                        </div>
+                        </Flex>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant='solid' color="white" bg='darkcyan' mr={3} onClick={onClose}>
                             Close
                         </Button>
-                        <Button variant='outline' type='submit'>
-                            {loading ? <Spinner color='green' /> : 'Add Task'}
+                        <Button 
+                            variant='outline' 
+                            type='submit'
+                            disabled={loading}
+                            colorScheme="blue"
+                        >
+                            {loading ? <Spinner size="sm" /> : 'Add Task'}
                         </Button>
                     </ModalFooter>
                 </form>

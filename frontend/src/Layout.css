@@ -20,14 +20,13 @@
 /* Wrapper for sidebar and content */
 .content-wrapper {
   display: flex;
-  flex: 1;
   margin-top: 80px; /* Offset for fixed navbar */
   min-height: calc(100vh - 80px);
 }
 
 /* Sidebar stays fixed on left */
 .sidenav {
-  width: 250px;
+  width: 300px;
   position: fixed;
   top: 80px; /* Below navbar */
   bottom: 0;
@@ -39,10 +38,11 @@
 
 /* Main content area scrolls */
 .main-content {
-  flex: 1;
-  margin-left: 250px; /* Offset for sidebar */
+  display: flex;
+  justify-content: center;
+  width: 100%;
   padding: 20px;
+  margin-left: 320px; /* Offset for sidebar */
   overflow-y: auto;
   min-height: calc(100vh - 80px);
-  background-color: #f8f8f8;
 }
