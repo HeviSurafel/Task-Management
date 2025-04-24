@@ -70,6 +70,7 @@ const storeCookies = (res, accessToken, refreshToken) => {
 
 // Signup
 const signup = asyncHandler(async (req, res) => {
+  console.log("here we are",req.body)
   const {
     phone,
     role,
@@ -259,17 +260,16 @@ const login = asyncHandler(async (req, res) => {
 
     // Store the refresh token in the database
     await storeRefreshToken(user._id, refreshToken);
-
+console.log("user",user)
     // Respond with comprehensive user data
     res.status(200).json({
       success: true,
-
       id: user._id,
       employee_id: user.employee_id?.employee_id, // 6-digit employee ID
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.employee_id?.role, // From employee record
+      role: user?.role, // From employee record
       status: user.status,
       profile: user.profile,
       phone: user.employee_id?.phone, // From employee record

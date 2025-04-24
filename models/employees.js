@@ -9,6 +9,11 @@ const employeeSchema = new mongoose.Schema({
         required: true,
         unique: true 
     },
+     department:{
+        type:String,
+        enum:['Developer','Graphics Design','Marketing','Promotion','Video Editing'],
+        required:true
+      },
     dateOfBirth: { type: Date, required: true },
     startDate: { type: Date, required: true },
     gender: { type: String, required: true, enum: ['Male', 'Female'] },

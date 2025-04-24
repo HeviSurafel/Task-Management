@@ -179,7 +179,11 @@ const deleteTask = asyncHandler(async (req, res) => {
     res.status(500).json({ message: error });
   }
 });
+
 const createTask = asyncHandler(async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const {
       title,
@@ -188,7 +192,53 @@ const createTask = asyncHandler(async (req, res) => {
       project,
       startDate,
       priority,
+      dueDate
     } = req.body;
+
+    // Get the creator from the authenticated user
+    const createdBy = req.user._id;
+
+    // Fetch the creator's role
+    const creator = await User.findById(createdBy).select('role').session(session);
+    if (!creator) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        success: false,
+        message: "Creator not found"
+      });
+    }
+
+    // Fetch the assignee's role
+    const assignee = await Employee.findById(assignTo)
+      .populate('user', 'role')
+      .session(session);
+
+    if (!assignee) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        success: false,
+        message: "Assignee not found"
+      });
+    }
+
+    // Role-based validation
+    const roleHierarchy = {
+      Ceo: ['Department Head', 'Supervisor', 'Employee'],
+      'Department Head': ['Supervisor', 'Employee'],
+      Supervisor: ['Employee']
+    };
+
+    const allowedRoles = roleHierarchy[creator.role];
+    if (!allowedRoles || !allowedRoles.includes(assignee.user.role)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to assign tasks to this role"
+      });
+    }
 
     // Create a new task
     const newTask = new Task({
@@ -198,47 +248,281 @@ const createTask = asyncHandler(async (req, res) => {
       project,
       startDate,
       priority,
+      createdBy,
+      dueDate
     });
 
     // Save the new task
-    await newTask.save();
+    await newTask.save({ session });
 
-    // Find the employee to whom the task is assigned
-    const employee = await Employee.findById(assignTo);
+    // Create notification for the assigned employee
+    const taskAssignmentNotification = new Notification({
+      title: "New Task Assigned",
+      description: `You have been assigned a new task: "${title}"`,
+      employee: assignTo,
+      relatedTask: newTask._id,
+      date: new Date(),
+      type: "task-assignment",
+      read: false,
+    });
 
-    if (employee) {
-      // Create a new notification for the employee
-      const newNotification = new Notification({
-        title: title,
-        description: `You have been assigned a new task: ${title}`,
-        employee: assignTo, // Reference to the employee
+    // Create notification for the task creator (if different from assignee)
+    const notificationPromises = [];
+    notificationPromises.push(taskAssignmentNotification.save({ session }));
+
+    if (createdBy.toString() !== assignTo.toString()) {
+      const creatorNotification = new Notification({
+        title: "Task Created",
+        description: `You created a new task "${title}" assigned to ${assignee.user.firstName} ${assignee.user.lastName}`,
+        employee: createdBy,
+        relatedTask: newTask._id,
         date: new Date(),
-        type: "task-assignment", // Define the type of the notification
+        type: "task-creation",
         read: false,
       });
-
-      // Save the notification
-      await newNotification.save();
-
-      // Optionally, you can send a real-time notification using something like WebSockets or an email
-      // This could be integrated based on your app's requirements
-
-      res
-        .status(201)
-        .json({ message: "Task added successfully and notification sent" });
-    } else {
-      res.status(404).json({ message: "Employee not found" });
+      notificationPromises.push(creatorNotification.save({ session }));
     }
+
+    // Activity log
+    const activityLog = new ActivityLog({
+      user: createdBy,
+      action: "Created task",
+      entity: "Task",
+      entityId: newTask._id,
+      changes: {
+        created: {
+          title,
+          assignTo,
+          dueDate
+        }
+      },
+    });
+    notificationPromises.push(activityLog.save({ session }));
+
+    // Execute all notifications and logs in parallel
+    await Promise.all(notificationPromises);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({
+      success: true,
+      message: "Task created successfully with notifications",
+      data: newTask
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("Create Task Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create task",
+      error: error.message
+    });
   }
 });
+
 const getTasks = asyncHandler(async (req, res) => {
   try {
     const tasks = await Task.find();
     res.send(tasks);
   } catch (error) {
     res.status(500).json({ message: error });
+  }
+});
+
+
+/**
+ * @desc    Get tasks assigned by a specific admin
+ * @route   GET /api/admins/:id/tasks
+ * @access  Private
+ */
+const adminProvidedTask = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Find tasks assigned by this admin
+    const tasks = await Task.find({ createdBy: id })
+  .populate({
+    path: "project",
+    select: "title clientName status files",
+  })
+  .populate({
+    path: "assignTo", // Populate the assignTo field
+    populate: {
+      path: "user", // Populate the user field within assignTo
+      select: "firstName lastName", // Select specific fields from the User model
+    },
+  })
+  .sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      count: tasks.length,
+      data: tasks,
+    });
+  } catch (error) {
+    console.error("Get Admin Provided Tasks Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch tasks assigned by admin",
+      error: error.message,
+    });
+  }
+});
+const updateTaskStatus = asyncHandler(async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { taskId } = req.params;
+    const { status } = req.body;
+    const userId = req.user._id;
+
+    // Validate allowed status values
+    const allowedStatus = ["Pending", "In Progress", "Completed", "On Hold"];
+    if (!allowedStatus.includes(status)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status value",
+        allowedStatus,
+      });
+    }
+
+    // Find the task with populated createdBy and assignTo
+    const task = await Task.findById(taskId)
+      .populate('createdBy')
+      .populate({
+        path: 'assignTo',
+        populate: { path: 'user' }
+      })
+      .session(session);
+
+    if (!task) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+    }
+
+    // Check authorization (creator, assignee, or admin can update)
+    const isCreator = task.createdBy._id.toString() === userId.toString();
+    const isAssignee = task.assignTo.user._id.toString() === userId.toString();
+    const isAdmin = req.user.role === 'Admin';
+
+    if (!isCreator && !isAssignee && !isAdmin) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this task",
+      });
+    }
+
+    const oldStatus = task.status;
+    task.status = status;
+    const updatedTask = await task.save({ session });
+
+    // Notification logic
+    const notificationPromises = [];
+    const statusChangeMessage = `Status changed from ${oldStatus} to ${status}`;
+
+    // 1. Notify task creator when status changes (unless they made the change)
+    if (!isCreator) {
+      const creatorNotification = new Notification({
+        title: "Task Status Updated",
+        description: `Task "${task.title}" ${statusChangeMessage} by ${req.user.firstName} ${req.user.lastName}`,
+        type: "task-status-update",
+        read: false,
+        relatedTask: task._id,
+        employee: task.createdBy._id,
+        date: new Date(),
+      });
+      notificationPromises.push(creatorNotification.save({ session }));
+    }
+
+    // 2. Notify assignee when status changes (unless they made the change)
+    if (!isAssignee && status !== "Completed") {
+      const assigneeNotification = new Notification({
+        title: "Task Status Updated",
+        description: `Task "${task.title}" ${statusChangeMessage} by ${req.user.firstName} ${req.user.lastName}`,
+        type: "task-status-update",
+        read: false,
+        relatedTask: task._id,
+        employee: task.assignTo.user._id,
+        date: new Date(),
+      });
+      notificationPromises.push(assigneeNotification.save({ session }));
+    }
+
+    // 3. Special notification when task is completed
+    if (status === "Completed") {
+      const completionNotification = new Notification({
+        title: "Task Completed",
+        description: `Task "${task.title}" has been completed by ${req.user.firstName} ${req.user.lastName}`,
+        type: "task-completion",
+        read: false,
+        relatedTask: task._id,
+        employee: isAssignee ? task.createdBy._id : task.assignTo.user._id,
+        date: new Date(),
+      });
+      notificationPromises.push(completionNotification.save({ session }));
+    }
+
+    // Activity log
+    const activityLog = new ActivityLog({
+      user: userId,
+      action: "Updated task status",
+      entity: "Task",
+      entityId: task._id,
+      changes: {
+        status: {
+          from: oldStatus,
+          to: status,
+        },
+      },
+    });
+    notificationPromises.push(activityLog.save({ session }));
+
+    // Execute all notifications and logs in parallel
+    await Promise.all(notificationPromises);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      success: true,
+      message: "Task status updated successfully",
+      data: {
+        task: updatedTask,
+        statusChange: {
+          from: oldStatus,
+          to: status,
+        },
+      },
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Update Task Status Error:", error);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid task ID format",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update task status",
+      error: error.message,
+    });
   }
 });
 const updateTask = asyncHandler(async (req, res) => {
@@ -274,6 +558,7 @@ const createEmployee = asyncHandler(async (req, res) => {
       dateOfBirth,
       startDate,
       gender,
+      department, // New department field
     } = req.body;
 
     // Validate required fields
@@ -286,7 +571,8 @@ const createEmployee = asyncHandler(async (req, res) => {
       !role ||
       !dateOfBirth ||
       !startDate ||
-      !gender
+      !gender ||
+      !department // Validate department
     ) {
       await session.abortTransaction();
       return res.status(400).json({
@@ -302,6 +588,7 @@ const createEmployee = asyncHandler(async (req, res) => {
           "dateOfBirth",
           "startDate",
           "gender",
+          "department", // Include department in required fields
         ],
       });
     }
@@ -362,6 +649,7 @@ const createEmployee = asyncHandler(async (req, res) => {
       dateOfBirth: new Date(dateOfBirth),
       startDate: new Date(startDate),
       gender,
+      department, // Add department to employee record
     });
 
     await newEmployee.save({ session });
@@ -387,6 +675,7 @@ const createEmployee = asyncHandler(async (req, res) => {
           phone: newEmployee.phone,
           dateOfBirth: newEmployee.dateOfBirth,
           gender: newEmployee.gender,
+          department: newEmployee.department, // Include department in response
         },
       },
     });
@@ -437,10 +726,11 @@ const getEmployees = asyncHandler(async (req, res) => {
     })
       .populate({
         path: "employeeDetails",
-        select: " phone dateOfBirth startDate gender employee_id _id ",
+        select: " phone dateOfBirth startDate gender employee_id _id department",
       })
       .select("firstName _id lastName email status role profile employee_id")
       .lean();
+      console.log("usersWithEmployees",usersWithEmployees)
     const employees = usersWithEmployees.map((user) => ({
       ...user.employee_id,
       _id: user.employeeDetails._id,
@@ -453,6 +743,7 @@ const getEmployees = asyncHandler(async (req, res) => {
       gender: user.employeeDetails.gender,
       phone: user.employeeDetails.phone,
       employee_id: user.employeeDetails.employee_id,
+      department:user.employeeDetails.department
     }));
 
     res.status(200).json({
@@ -547,87 +838,44 @@ const dashboard = asyncHandler(async (req, res) => {
       suspendedUsers,
       allTasks,
       genderDistribution,
-      departmentDistribution,
       recentActivities,
       newHiresThisMonth,
       usersWithEmployees,
     ] = await Promise.all([
-      // Employee counts
       Employee.countDocuments(),
-
-      // User status counts (active)
       User.countDocuments({ status: "active" }),
-
-      // User status counts (inactive)
       User.countDocuments({ status: "inactive" }),
-
-      // User status counts (suspended)
       User.countDocuments({ status: "suspended" }),
-
-      // Task data with populated assignee
       Task.find()
-        .select("title status dueDate priority assignee")
+        .select("title status dueDate priority assignTo")
         .populate({
           path: "assignTo",
           select: "firstName lastName status",
           populate: {
-            path: "employee_id",
-            select: "role department gender",
+            path: "user", // Correctly populate the user field
+            select: "gender startDate",
           },
         })
         .sort({ createdAt: -1 })
         .lean(),
-
-      // Gender distribution from Employee model
       Employee.aggregate([
-        {
-          $group: {
-            _id: "$gender",
-            count: { $sum: 1 },
-          },
-        },
+        { $group: { _id: "$gender", count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
-
-      // Department distribution from Employee model
-      Employee.aggregate([
-        {
-          $group: {
-            _id: "$department",
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { count: -1 } },
-      ]),
-
-      // Recent activities (last 5)
       ActivityLog.find()
         .sort({ timestamp: -1 })
         .limit(5)
-        .populate({
-          path: "user",
-          select: "firstName lastName",
-          populate: {
-            path: "employee_id",
-            select: "role",
-          },
-        })
+        .populate({ path: "user", select: "firstName lastName role status" })
         .lean(),
-
-      // New hires this month (based on employee startDate)
       Employee.countDocuments({
         startDate: {
           $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
           $lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
         },
       }),
-
-      // Get users with their employee data
       User.find()
-        .populate({
-          path: "employeeDetails",
-          select: " department gender startDate",
-        })
+        .select("firstName lastName email role status employeeDetails")
+        .populate({ path: "employeeDetails", select: "gender startDate" })
         .lean(),
     ]);
 
@@ -638,27 +886,19 @@ const dashboard = asyncHandler(async (req, res) => {
     // Prepare statistics from usersWithEmployees
     const employeeStats = usersWithEmployees.reduce(
       (stats, user) => {
-        if (user.employee_id) {
-          // Count by role
-          const role = user.employee_id.role;
-          stats.byRole[role] = (stats.byRole[role] || 0) + 1;
-
-          // Count by status
-          const status = user.status;
-          stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
-
-          // Count active employees
-          if (user.status === "active") {
-            stats.activeEmployees++;
-          }
+        // Count by role (now from user directly)
+        const role = user.role;
+        stats.byRole[role] = (stats.byRole[role] || 0) + 1;
+        // Count by status
+        const status = user.status;
+        stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
+        // Count active employees
+        if (user.status === "active") {
+          stats.activeEmployees++;
         }
         return stats;
       },
-      {
-        byRole: {},
-        byStatus: {},
-        activeEmployees: 0,
-      }
+      { byRole: {}, byStatus: {}, activeEmployees: 0 }
     );
 
     // Prepare dashboard data
@@ -671,31 +911,24 @@ const dashboard = asyncHandler(async (req, res) => {
         activeEmployees: employeeStats.activeEmployees,
         activePercentage: calculatePercentage(activeUsers, totalEmployees),
         inactivePercentage: calculatePercentage(inactiveUsers, totalEmployees),
-        suspendedPercentage: calculatePercentage(
-          suspendedUsers,
-          totalEmployees
-        ),
+        suspendedPercentage: calculatePercentage(suspendedUsers, totalEmployees),
         genderDistribution,
-        departmentDistribution,
         newHiresThisMonth,
         byRole: employeeStats.byRole,
         byStatus: employeeStats.byStatus,
       },
       tasks: {
         total: allTasks.length,
-        completed: allTasks.filter((task) => task.status === "Completed")
-          .length,
-        inProgress: allTasks.filter((task) => task.status === "In Progress")
-          .length,
+        completed: allTasks.filter((task) => task.status === "Completed").length,
+        inProgress: allTasks.filter((task) => task.status === "In Progress").length,
         pending: allTasks.filter((task) => task.status === "Pending").length,
         recentTasks: allTasks.slice(0, 5),
         completionRate: calculatePercentage(
           allTasks.filter((task) => task.status === "Completed").length,
           allTasks.length
         ),
-        // Tasks by assignee status
         byAssigneeStatus: allTasks.reduce((acc, task) => {
-          const status = task.assignee?.status || "unassigned";
+          const status = task.assignTo?.status || "unassigned";
           if (!acc[status]) acc[status] = 0;
           acc[status]++;
           return acc;
@@ -718,7 +951,6 @@ const dashboard = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error("Dashboard Error:", error);
-
     if (error.name === "MongoError") {
       return res.status(503).json({
         success: false,
@@ -727,7 +959,6 @@ const dashboard = asyncHandler(async (req, res) => {
         suggestion: "Please try again later or contact support",
       });
     }
-
     res.status(500).json({
       success: false,
       message: "Failed to load dashboard data",
@@ -862,8 +1093,10 @@ module.exports = {
   getEmployees,
   getEmployeeStats,
   updateEmployee,
+  updateTaskStatus,
   deleteEmployee,
   dashboard,
+  adminProvidedTask,
   createProject,
   getProjects,
   deleteProject,

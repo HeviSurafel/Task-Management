@@ -1,37 +1,74 @@
-const express = require('express');
-const connectDB = require('./config/db');
-require('dotenv').config();
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const cookieParser = require("cookie-parser");
 
-// Routes Imports
-const authRoute = require('./routes/auth');
-const app = express();
-const PORT = process.env.PORT;
-app.use(cookieParser());
+// server.js - Optimized for cPanel deployment
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 const path = require('path');
-// CORS Configuration
+const cookieParser = require('cookie-parser');
+const connectDB = require('./config/db');
+
+// Initialize Express app
+const app = express();
+const PORT = process.env.PORT || 3000; // cPanel default port
+
+// Database connection (with legacy MongoDB driver support)
+connectDB();
+
+// Middleware Configuration
+app.set('trust proxy', true); // Important for cPanel proxy
+
+// Enhanced CORS configuration
+const allowedOrigins = [
+  'https://makallataskmanagement.lobborecords.com',
+  'http://makallataskmanagement.lobborecords.com'
+];
+
 app.use(cors({
-    origin: "http://localhost:3000", // Allow only your frontend origin
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true // Allow cookies and authentication headers
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
-connectDB();
-// Serve static files from the 'uploads' folder
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(cookieParser());
+
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const adminRoute=require("./routes/Admin.route")
-// API's
+const employeeRoute=require("./routes/Employee.route")
+const commentRoute=require("./routes/comment.route")
+const NotificationRoute=require("./routes/notification")
+const authRoute = require('./routes/auth');
+// API Routes
 app.use('/api/auth', authRoute);
 app.use('/api',adminRoute)
+app.use('/api',employeeRoute)
+app.use('/api',commentRoute)
+app.use('/api',NotificationRoute)
+// Health Check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    server: 'makallataskmanagement.lobborecords.com'
+  });
+});
 
-// Server Listen
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Error Handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// Start Server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });

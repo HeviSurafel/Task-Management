@@ -74,7 +74,7 @@ const adminRoute = async (req, res, next) => {
       }
 
       // Check role from populated employee data
-      if (req.user.role === "Admin") {
+      if (req.user.role === "Ceo" || 'Department Head' ||'supervisor') {
           return next();
       }
 

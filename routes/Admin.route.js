@@ -9,6 +9,8 @@ const { protectRoute, adminRoute } = require("../middleware/auth");
 const {
   updateTask,
   getTasks,
+  updateTaskStatus,
+  adminProvidedTask,
   deleteTask,
   createTask,
   createEmployee,
@@ -30,7 +32,7 @@ router.get("/tasks", protectRoute, adminRoute, getTasks);
 router.put("/task/:id", protectRoute, adminRoute, updateTask);
 router.delete("/task/:id", protectRoute, adminRoute, deleteTask);
 //employee routes
-
+router.get("/task/admin/:id",protectRoute, adminRoute, adminProvidedTask);
 router.post("/employee", protectRoute, adminRoute, createEmployee);
 router.get("/employees", protectRoute, adminRoute, getEmployees);
 router.get("/employees-stats", protectRoute, adminRoute, getEmployeeStats);
@@ -39,6 +41,8 @@ router.delete("/employee/:id", protectRoute, adminRoute, deleteEmployee);
 // dashboard routes
 router.get("/dashboard", protectRoute, adminRoute, dashboard);
 // project route
+///task/${taskId}/status
+router.put("/task/:taskId/status", protectRoute, updateTaskStatus);
 router.get("/project/dashboard", protectRoute, adminRoute, projectDashboard);
 router.post("/project", protectRoute, adminRoute, createProject);
 router.get("/projects", protectRoute, adminRoute, getProjects);
