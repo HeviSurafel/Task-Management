@@ -1,4 +1,3 @@
-
 // server.js - Optimized for cPanel deployment
 require('dotenv').config();
 const express = require('express');
@@ -9,18 +8,18 @@ const connectDB = require('./config/db');
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3000; // cPanel default port
+const PORT = process.env.PORT || 3001;
 
-// Database connection (with legacy MongoDB driver support)
+// Connect to MongoDB
 connectDB();
 
-// Middleware Configuration
-app.set('trust proxy', true); // Important for cPanel proxy
+// Trust proxy (important for reverse proxies on cPanel)
+app.set('trust proxy', true);
 
 // Enhanced CORS configuration
 const allowedOrigins = [
   'https://makallataskmanagement.lobborecords.com',
-  'http://makallataskmanagement.lobborecords.com'
+  'http://localhost:3000',
 ];
 
 app.use(cors({
@@ -36,25 +35,33 @@ app.use(cors({
   credentials: true
 }));
 
-// Body parsers
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-const adminRoute=require("./routes/Admin.route")
-const employeeRoute=require("./routes/Employee.route")
-const commentRoute=require("./routes/comment.route")
-const NotificationRoute=require("./routes/notification")
+
+// ===== API ROUTES =====
+const adminRoute = require("./routes/Admin.route");
+const employeeRoute = require("./routes/Employee.route");
+const commentRoute = require("./routes/comment.route");
+const NotificationRoute = require("./routes/notification");
 const authRoute = require('./routes/auth');
-// API Routes
+
+// Mount API Routes
 app.use('/api/auth', authRoute);
-app.use('/api',adminRoute)
-app.use('/api',employeeRoute)
-app.use('/api',commentRoute)
-app.use('/api',NotificationRoute)
-// Health Check
+app.use('/api', adminRoute);
+app.use('/api', employeeRoute);
+app.use('/api', commentRoute);
+app.use('/api', NotificationRoute);
+
+// Serve static files (uploads and frontend build)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy',
@@ -62,13 +69,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error Handling
+// 
+
+// Error Handling Middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// Start Server
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/users");
-const redis = require("../Middleware/Redis");
+const redis = require("../middleware/Redis");
 const transporter = require("../config/nodemailer");
 const asyncHandler = require("express-async-handler");
 const { AsyncResource } = require("async_hooks");
