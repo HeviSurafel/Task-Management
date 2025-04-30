@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import "./register.css";
 import register from "../../assets/register/register.png";
@@ -124,6 +123,7 @@ function Register() {
                             />
                         </div>
                         <div className='input-main-container'>
+                            <img className='input-icon' src={name} alt="input" />
                             <input
                                 placeholder='Phone *'
                                 type='text'
@@ -134,6 +134,7 @@ function Register() {
                             />
                         </div>
                         <div className='input-main-container'>
+                            <img className='input-icon' src={name} alt="input" />
                             <input
                                 placeholder='Role *'
                                 type='text'
@@ -144,6 +145,7 @@ function Register() {
                             />
                         </div>
                         <div className='input-main-container'>
+                            <img className='input-icon' src={name} alt="input" />
                             <input
                                 placeholder='Date of Birth *'
                                 type='date'
@@ -154,6 +156,7 @@ function Register() {
                             />
                         </div>
                         <div className='input-main-container'>
+                            <img className='input-icon' src={name} alt="input" />
                             <input
                                 placeholder='Start Date *'
                                 type='date'
@@ -164,6 +167,7 @@ function Register() {
                             />
                         </div>
                         <div className='input-main-container'>
+                            <img className='input-icon' src={name} alt="input" />
                             <select
                                 name='gender'
                                 value={formData.gender}
@@ -186,6 +190,5 @@ function Register() {
         </div>
     );
 }
-
 
 export default Register;

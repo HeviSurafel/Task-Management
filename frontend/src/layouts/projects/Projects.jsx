@@ -122,7 +122,7 @@ function Projects() {
               <div className="project-files">
                 <h4>Files:</h4>
                 {project.files.map((file) => {
-                  const fileUrl = `http://makallataskmanagement.lobborecords.com/uploads/${file.path
+                  const fileUrl = `https://makallataskmanagement.lobborecords.com/uploads/${file.path
                     .split("\\")
                     .pop()}`;
 

@@ -1,39 +1,57 @@
 .register-main-container {
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
     background-color: darkcyan;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .register-container {
-    width: 70%;
+    width: 100%;
+    max-width: 1200px;
     background-color: white;
     border-radius: 15px;
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    overflow: hidden;
 }
 
 .register-left-container {
     width: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 300px;
 }
 
 .register-right-container {
     width: 50%;
     padding: 2rem;
+    box-sizing: border-box;
+    min-width: 300px;
+    overflow-y: auto;
+    max-height: 90vh;
 }
 
 .register-img {
-    height: 650px;
+    width: 100%;
+    height: auto;
+    max-height: 650px;
+    object-fit: contain;
 }
 
 .signup-text {
     font-family: Inter;
-    font-size: 36px;
+    font-size: 2rem;
     font-weight: 700;
-    line-height: 43.88px;
+    line-height: 1.2;
     color: #212427;
+    text-align: center;
+    margin-bottom: 1.5rem;
 }
 
 .input-main-container {
@@ -44,30 +62,50 @@
     height: 60px;
     border-radius: 10px;
     border: 1px solid #565454;
-    padding: 1rem;
+    padding: 0 1rem;
     margin: 1rem 0;
+    position: relative;
 }
 
-.input-main-container input {
+.input-main-container input,
+.input-main-container select {
     width: 100%;
     padding: 0.5rem;
     outline: none;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+}
+
+.input-main-container select {
+    height: 100%;
+    color: #565454;
+    appearance: none;
 }
 
 .input-icon {
     width: 20px;
     height: 20px;
+    flex-shrink: 0;
 }
 
 .register-btn {
     height: 60px;
-    width: 30%;
+    width: 100%;
+    max-width: 200px;
     background-color: darkcyan;
     border-radius: 15px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: auto;
+    margin: 2rem auto;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.register-btn:hover {
+    background-color: #008b8b;
 }
 
 .register-btn p {
@@ -76,6 +114,7 @@
     font-weight: 500;
     line-height: 19.5px;
     color: #F8F9FB;
+    margin: 0;
 }
 
 .account-text {
@@ -85,10 +124,66 @@
     line-height: 19.5px;
     color: #212427;
     margin-top: 2rem;
+    text-align: center;
 }
 
 .account-text span {
     color: #008BD9;
     text-decoration: underline;
     cursor: pointer;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .register-container {
+        flex-direction: column;
+    }
+    
+    .register-left-container, 
+    .register-right-container {
+        width: 100%;
+    }
+    
+    .register-left-container {
+        padding: 20px;
+    }
+    
+    .register-right-container {
+        padding: 1.5rem;
+    }
+    
+    .register-img {
+        max-height: 300px;
+    }
+    
+    .input-main-container {
+        height: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-btn {
+        width: 100%;
+        max-width: none;
+    }
+    
+    .signup-text {
+        font-size: 1.5rem;
+    }
+    
+    .input-main-container {
+        padding: 0 0.8rem;
+    }
+    
+    .input-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* For very small screens */
+@media (max-height: 700px) {
+    .register-right-container {
+        max-height: 70vh;
+    }
 }

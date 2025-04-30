@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from '../lib/axios';
 import { io } from 'socket.io-client';
-const socket = io('http://makallataskmanagement.lobborecords.com/api'); // Replace with your server URL
+const socket = io('https://makallataskmanagement.lobborecords.com/api'); // Replace with your server URL
 
 const useTaskStore = create((set) => {
   // Listen for real-time updates from the server

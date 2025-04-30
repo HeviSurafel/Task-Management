@@ -38,17 +38,21 @@ export const useUserStore = create(
           set({ loading: false });
         }
       },
-      updateProfile:async(address,phone)=>{
+      updateProfile: async (address, phone) => {
+        // Confirmation dialog before update
+        const shouldUpdate = window.confirm("Are you sure you want to update your profile?");
+        if (!shouldUpdate) return;
+
         set({ loading: true });
         try {
-          const { data } = await axios.put("/auth/updateprofile", {phone,address});
+          const { data } = await axios.put("/auth/updateprofile", { phone, address });
           set({ user: data });
           toast.success("Profile updated successfully");
         } catch (error) {
           toast.error(error.response?.data?.message || "Update failed");
         } finally {
           set({ loading: false });
-        } 
+        }
       },
       logout: async () => {
         try {
@@ -74,6 +78,8 @@ export const useUserStore = create(
       },
 
       resetPassword: async (token,password) => {
+        const shouldUpdate = window.confirm("Are you sure you want to resetPassword?");
+        if (!shouldUpdate) return;
         try {
           await axios.put("/auth/updateNewPassword", {token, password });
         
@@ -82,6 +88,9 @@ export const useUserStore = create(
         }
       },
       updatePassword: async (oldPassword,newpassword,email) => {
+        const shouldUpdate = window.confirm("Are you sure you want to updatePassword?");
+        if (!shouldUpdate) return;
+
         try {
           await axios.put("/auth/update-password", { email,oldPassword,newpassword });
           toast.success("Password updated");

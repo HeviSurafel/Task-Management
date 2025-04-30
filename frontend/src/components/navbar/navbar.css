@@ -1,3 +1,4 @@
+/* Default styles for desktop */
 .nav-main-container {
     position: sticky;
     top: 0;
@@ -7,81 +8,64 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    height: 80px;
+    height: 60px;
     width: 100%;
     box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
     background-color: rgba(248, 248, 248, 1);
-    padding: 0 2rem;
-    border-radius: 12px;
- 
+    padding: 0 1rem;
 }
 
 .nav-main-text {
     font-family: Inter;
-    font-size: 32px;
-    font-size: 600;
-    line-height: 38.73px;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
     color: darkcyan;
+    white-space: nowrap;
 }
 
 .nav-main-text span {
-    font-family: Inter;
-    font-size: 32px;
-    font-size: 600;
-    line-height: 38.73px;
     color: #000000;
-}
-
-.nav-search-container {
-    height: 34px;
-    width: 43%;
-    border-radius: 8px;
-    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-    display: flex;
-    align-items: center;
-}
-
-.nav-search-container input {
-    width: 100%;
-    border: none;
-    background-color: transparent;
-    padding: 0.5rem;
-    outline: none;
-}
-
-.icon-img {
-    cursor: pointer;
-    height: 34px;
-    width: 34px;
 }
 
 .nav-notification-container {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 2rem;
+    gap: 1rem;
+}
+
+.date-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .nav-day-text {
     font-family: Inter;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
-    line-height: 18.15px;
+    line-height: 1.2;
     color: #000000;
+    margin: 0;
+    white-space: nowrap;
 }
 
 .nav-date-text {
     font-family: Inter;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
-    line-height: 16.94px;
+    line-height: 1.2;
     color: darkcyan;
+    margin: 0;
+    white-space: nowrap;
 }
+
 .notification-icon-container {
     position: relative;
-  }
-  
-  .notification-badge {
+}
+
+.notification-badge {
     position: absolute;
     top: -5px;
     right: -5px;
@@ -95,23 +79,86 @@
     justify-content: center;
     font-size: 10px;
     font-weight: bold;
-  }
-  
-  /* Add these if they don't exist already */
-  .nav-notification-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-  
-  .task-read {
+}
+
+.task-read {
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-  }
-  
-  .read-icon {
+}
+
+.read-icon {
     font-size: 24px;
     color: #555;
-  }
+}
+
+/* Tablet Responsive Styles */
+@media (max-width: 1024px) {
+    .nav-main-container {
+        padding: 0 0.75rem;
+        height: 55px;
+    }
+
+    .nav-main-text {
+        font-size: 22px;
+        margin-left: 40px;
+    }
+
+    .nav-notification-container {
+        gap: 0.75rem;
+    }
+
+    .nav-day-text {
+        font-size: 13px;
+    }
+
+    .nav-date-text {
+        font-size: 11px;
+    }
+
+    .read-icon {
+        font-size: 22px;
+    }
+
+    .notification-badge {
+        width: 17px;
+        height: 17px;
+        font-size: 9px;
+    }
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .nav-main-container {
+        padding: 0 0.5rem;
+        height: 50px;
+    }
+
+    .nav-main-text {
+        font-size: 20px;
+        margin-left: 40px;
+    }
+
+    .nav-notification-container {
+        gap: 0.5rem;
+    }
+
+    .nav-day-text {
+        font-size: 12px;
+    }
+
+    .nav-date-text {
+        font-size: 10px;
+    }
+
+    .read-icon {
+        font-size: 20px;
+    }
+
+    .notification-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 8px;
+    }
+}

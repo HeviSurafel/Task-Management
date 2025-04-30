@@ -125,7 +125,7 @@ function TaskAndChat() {
             <div className={`task-status ${getStatusClass(task.status)}`}>
               {task.status}
               {task?.project.files?.map((file) => {
-                const fileUrl = `http://makallataskmanagement.lobborecords.com/uploads/${file.path
+                const fileUrl = `https://makallataskmanagement.lobborecords.com/uploads/${file.path
                   .split("\\")
                   .pop()}`;
 

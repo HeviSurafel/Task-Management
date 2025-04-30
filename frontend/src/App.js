@@ -1,16 +1,16 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Register from './layouts/auth/Register';
-import Login from './layouts/auth/Login';
-import Dashboard from './layouts/dashboard/Dashboard';
-import Employees from './layouts/employees/Employees';
-import Projects from './layouts/projects/Projects';
-import Tasks from './layouts/tasks/Tasks';
-import ProtectedRoute from './ProtectedRoute';
-import NotificationsPage from './layouts/Notification/Notification';
-import Layout from './Layout';
-import TaskAndChat from './layouts/Taskandchat/taskandchat';
+import Register from './layouts/auth/Register.jsx';
+import Login from './layouts/auth/Login.jsx';
+import Dashboard from './layouts/dashboard/Dashboard.jsx';
+import Employees from './layouts/employees/Employees.jsx';
+import Projects from './layouts/projects/Projects.jsx';
+import Tasks from './layouts/tasks/Tasks.jsx';
+import ProtectedRoute from './ProtectedRoute.js';
+import NotificationsPage from './layouts/Notification/Notification.jsx';
+import Layout from './Layout.jsx';
+import TaskAndChat from './layouts/Taskandchat/Taskandchat.jsx';
 import EmployeeOverview from "./EmployeeDashbard/EmployeeOverview.jsx"
-import EmployeeHistory from './layouts/employee History/employeeHistroy.jsx';
+import EmployeeHistory from './layouts/employee History/EmployeeHistroy.jsx';
 function App() {
   return (
     <Router>

@@ -7,16 +7,17 @@ import { Link } from 'react-router-dom';
 import { useToast, Spinner } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../../store/auth';
-import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import eye icons
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function Login() {
     const navigate = useNavigate();
     const toast = useToast();
     const { user, login } = useUserStore();
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+    const [showPassword, setShowPassword] = useState(false);
+
     useEffect(() => {
-        if (user && (user.role === "Ceo" || user.role === "Employee" || user.role === "Department Head" || user.role === "supervisor")) {
+        if (user && (user.role === "Ceo" || user.role === "Department Head" || user.role === "supervisor")) {
             navigate("/admin/dashboard");
         } else if (user && user.role === "Employee") {
             navigate("/employee/overview");
@@ -58,7 +59,7 @@ function Login() {
                             <img className='input-icon' src={password} alt="input" />
                             <input
                                 placeholder='Password *'
-                                type={showPassword ? 'text' : 'password'} // Toggle input type
+                                type={showPassword ? 'text' : 'password'}
                                 name='password'
                                 value={formData.password}
                                 onChange={handleChange}
@@ -75,7 +76,7 @@ function Login() {
                             <p>{loading ? <Spinner color='white' /> : 'Login'}</p>
                         </button>
                     </form>
-                    <p className='account-text'>Don’t have an account? <Link to='/register'><span>Sign Up</span></Link></p>
+                    <p className='account-text'>Don't have an account? <Link to='/register'><span>Sign Up</span></Link></p>
                 </div>
                 <div className='login-right-container'>
                     <img className='login-img' src={loginpic} alt="login" />
