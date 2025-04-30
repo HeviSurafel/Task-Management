@@ -1,0 +1,134 @@
+/* Main Container */
+.app-main-container {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+  .app-main-right-container {
+    flex: 1;
+    padding: 1rem;
+    margin-left: 320px; /* Adjust based on your sidebar width */
+  }
+  
+  /* Table Header */
+  .table-main-header {
+    width: 100%;
+    height: auto;
+    min-height: 80px;
+    background: darkcyan;
+    border-radius: 15px;
+    margin: 0 auto 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    gap: 1rem;
+  }
+  
+  .table-header-text {
+    font-family: Inter;
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #FFFFFF;
+    margin: 0;
+  }
+  
+  /* Table Button */
+  .table-btn {
+    background-color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-family: Inter;
+    font-size: 0.875rem;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .table-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .btn-text {
+    display: inline;
+  }
+  
+  /* Table Container */
+  .table-responsive-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .table-main-container {
+    background-color: white;
+    border-radius: 20px;
+    padding: 1rem;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    width: 100%;
+  }
+  
+  /* Table Styles */
+  .Table {
+    width: 100%;
+  }
+  
+  .Th, .Td {
+    padding: 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  
+  /* Responsive Classes */
+  .responsive-hide {
+    display: table-cell;
+  }
+  
+  /* Media Queries */
+  @media (max-width: 992px) {
+    .app-main-right-container {
+      margin-left: 0;
+      padding-top: 60px; /* Space for navbar */
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .table-main-header {
+      flex-direction: row;
+      justify-content: space-between;
+      height: 80px;
+    }
+  
+    .responsive-hide {
+      display: none;
+    }
+  
+    .btn-text {
+      display: none;
+    }
+  
+    .table-btn {
+      padding: 0.7rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .table-main-header {
+      padding: 0.5rem;
+    }
+  
+    .table-header-text {
+      font-size: 1rem;
+    }
+  
+    .Th, .Td {
+      padding: 0.5rem;
+      font-size: 0.875rem;
+    }
+  }

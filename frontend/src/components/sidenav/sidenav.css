@@ -1,0 +1,203 @@
+/* Sidebar Container */
+.sidenav-main-container {
+    width: 300px;
+    border-radius: 12px;
+    background-color: darkcyan;
+    padding: 2rem 0;
+    margin: 2rem 1rem;
+    height: calc(100vh - 4rem);
+    position: fixed;
+    left: 0;
+    top: 60px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+/* Scrollable Content */
+.sidenav-scrollable-content {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-bottom: 1rem;
+}
+
+/* Profile Section */
+.sidenav-profile-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.sidenav-profile-img {
+    border-radius: 50%;
+    height: 100px;
+    width: 100px;
+    border: 3px solid white;
+    object-fit: cover;
+}
+
+.sidenav-profile-name {
+    font-family: Inter, sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: white;
+    margin-top: 1rem;
+}
+
+.sidenav-profile-email {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 0.5rem;
+}
+
+/* Navigation List */
+.sidenav-list-main-container {
+    margin-top: 1rem;
+}
+
+.sidenav-list {
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1.5rem;
+    margin: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.sidenav-list:hover {
+    background-color: white;
+    cursor: pointer;
+    transform: translateX(5px);
+}
+
+.sidenav-icon {
+    width: 24px;
+    height: 24px;
+    color: white;
+    transition: color 0.3s ease;
+}
+
+.sidenav-list-text {
+    font-family: Inter, sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: white;
+    transition: color 0.3s ease;
+}
+
+.sidenav-list:hover .sidenav-icon,
+.sidenav-list:hover .sidenav-list-text {
+    color: darkcyan;
+}
+
+/* Active Link Styling */
+.default-hover {
+    background-color: white;
+    cursor: pointer;
+}
+
+.default-hover .sidenav-icon,
+.default-hover .sidenav-list-text {
+    color: darkcyan;
+}
+
+/* Mobile Styles */
+@media (max-width: 992px) {
+    .sidenav-main-container {
+        transform: translateX(-100%);
+        height: calc(100vh - 60px);
+        top: 60px;
+        margin: 0;
+        border-radius: 0;
+        width: 280px;
+    }
+
+    .sidenav-main-container.sidenav-active {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .sidebar-overlay.sidebar-overlay-active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .hamburger-menu {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        width: 30px;
+        height: 24px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        z-index: 1001;
+        position: fixed;
+        left: 20px;
+        top: 18px;
+    }
+
+    .hamburger-menu div {
+        width: 30px;
+        height: 3px;
+        background: darkcyan;
+        border-radius: 10px;
+        transition: all 0.3s linear;
+        position: relative;
+        transform-origin: 1px;
+    }
+
+    .hamburger-menu.hamburger-active div:first-child {
+        transform: rotate(45deg);
+    }
+
+    .hamburger-menu.hamburger-active div:nth-child(2) {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    .hamburger-menu.hamburger-active div:last-child {
+        transform: rotate(-45deg);
+    }
+}
+
+/* Desktop Styles */
+@media (min-width: 993px) {
+    .hamburger-menu {
+        display: none;
+    }
+    
+    .sidebar-overlay {
+        display: none;
+    }
+    
+    .main-content {
+        margin-left: 320px;
+    }
+}
